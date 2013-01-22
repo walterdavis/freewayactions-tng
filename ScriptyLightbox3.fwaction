@@ -54,12 +54,15 @@ var pageHasLinkToScript = function(name){
 
 var findOrCreateStyleLink = function(name, path){
   var head = fwDocument.fwTags.fwFind('head');
-  var style, styles = head.fwFindAll('link', 'rel', 'stylesheet'), re = new RegExp('/' + name + '.css$');
-  for(i in styles){
-    if(styles[i].href && styles[i].href.toString().match(re)){
-      style = styles[i];
+  var styles = head.fwFindAll('link'), re = new RegExp(name + '\.css');
+  var findStyleLink = function(re){
+    for(i in styles){
+      if(styles[i].href && styles[i].href.toString().match(re)){
+        return styles[i];
+      }
     }
   }
+  var style = findStyleLink(re);
   if(!style){
     style = head.fwAdd('link', false);
     head.fwAddRawOpt('');
