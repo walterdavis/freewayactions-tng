@@ -1,0 +1,49 @@
+<action name="com.wdstudio.labelhelper" title="LabelHelper" height="12">
+<action-version version="0.1">
+LabelHelper
+Copyright 2012 Walter Lee Davis
+</action-version>
+<action-text name="id" title="ID">
+<action-text name="class" title="Class">
+<action-text name="tag" title="Tag" default="label">
+
+<action-javascript>
+	String.prototype.strip = function() {
+		return this.replace(/^\s+/, '').replace(/\s+$/, '');
+	}
+
+	var hasClassName = function(element, className) {
+		className = fwQuote(className,'','"'); //"
+		var elementClassName = (element["class"]) ? fwQuote(element["class"],'','"') : ''; //"
+		return ((elementClassName.length > 0) && (elementClassName == className || new RegExp("\\b" + className + "\\b").test(elementClassName)));
+	};
+
+	var addClassName = function(element, className) {
+		className = fwQuote(className,'','"'); //"
+		if (!hasClassName(element,className)){
+			var elementClassName = (element["class"]) ? fwQuote(element["class"],'','"') : ''; //"
+			var out = (elementClassName + ' ' + className).strip();
+			return element["class"] = fwQuote(out);
+		}
+	};
+
+	function fwBeforeEndBody(){
+		var thisItem = fwDocument.fwTags.fwFind(fwItem);
+		if(thisItem && thisItem.fwFindEnclosing('label')){
+			var thisPara = thisItem.fwFindEnclosing('label');
+			if (thisPara){
+			  thisPara.fwTitle = fwParameters['tag'].fwValue;
+				if(fwParameters['id'].fwValue){
+					thisPara['id'] = fwQuote(fwParameters['id'].fwValue);
+				}
+				if(fwParameters['class'].fwValue){
+					addClassName(thisPara,fwParameters['class'].fwValue);
+				}
+				thisItem.fwDelete();
+			}else{
+				alert('A surrounding label could not be detected. Your code was not added to the page.');
+			}
+		}
+	}
+</action-javascript>
+</action>

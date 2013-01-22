@@ -1,0 +1,393 @@
+<action-encoding>UTF-8</action-encoding>
+<library-action name="style_accessors">
+<action-version version="1.2">
+Style Accessors
+
+Get and set styles on any element, regardless where they were initially defined.
+
+The MIT License (MIT)
+Copyright (c) 2013 Walter Lee Davis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this
+software and associated documentation files (the "Software"), to deal in the Software
+without restriction, including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</action-version>
+<action-javascript>
+/**
+* Does this page use a root-based Resources folder?
+* @return boolean
+*/
+if(undefined == FWPage.hasRootResourcesFolder){
+  FWPage.prototype.hasRootResourcesFolder = function(){
+    var head = fwDocument.fwTags.fwFind('head');
+    if(!head) fwAbort('Please call headLinks from fwBeforeEndHead or later.');
+    var links = head.fwFindAll('link', 'href');
+    for(var i in links){
+      if(links[i].href){
+        var link = links[i].href.toString();
+        var page = this.fwFileName.toString().split('.').shift();
+        if(link.match('../css') && link.indexOf(page) > 0){
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+}
+/**
+* Does this page use a Resources folder?
+* @return boolean
+*/
+if(undefined == FWPage.hasNoResourcesFolder){
+  FWPage.prototype.hasNoResourcesFolder = function(){
+    return (! fwClearGif.toString().match('Resources/'))
+  }
+}
+/**
+* Find the folder where the style should be saved
+* @return string
+*/
+if(undefined == FWPage.styleFolder){
+  FWPage.prototype.styleFolder = function(){
+    var rootFolder = fwDocument.fwPages.fwItems[0].fwFolder.fwHttpPath();
+    if(this.hasNoResourcesFolder()){
+      return '/' + this.fwFolder.fwHttpPath();
+    }
+    if(this.hasRootResourcesFolder()){
+      return rootFolder + '/css/';
+    }
+    return '/' + this.fwFolder.fwHttpPath() + 'css/';
+  };
+}
+/**
+* Define a URL for the override sheet for this page
+* @return string relative URL to override sheet
+*/
+if(undefined == FWPage.styleOverrideURL){
+  FWPage.prototype.styleOverrideURL = function(){
+    var folder = this.styleFolder();
+    return folder + this.basename() + '_override.css';
+  };
+}
+/**
+* Define a path to the override sheet for this page.
+* @return string root-relative path to the override sheet
+*/
+if(undefined == FWPage.styleOverridePath){
+  FWPage.prototype.styleOverridePath = function(){
+    var rootFolder = fwDocument.fwPages.fwItems[0].fwFolder;
+    if(!rootFolder) fwAbort('Could not locate the root folder. Make sure there is at least one page in it.')
+    var rootFolderPath =  rootFolder.fwHttpPath(null, true);    
+    return (rootFolderPath + this.styleOverrideURL()).replace(/\//g, ':');
+  };
+}
+/**
+* Basename for the override sheet
+* @return string page filename without extension
+*/
+if(undefined == FWPage.basename){
+  FWPage.prototype.basename = function(){
+    var filename = this.fwFileName.toString().split('.');
+    if(this.hasRootResourcesFolder()){
+      filename = this.fwHttpPath().toString().replace(/\//g,'_').split('.');
+    }
+    filename.pop();
+    return filename.join('.');
+  };
+}
+/**
+* Add a link to an override stylesheet, and create the file for that sheet.
+* Only alters the page once per publish cycle.
+* Must be called from fwBeforeEndHead() or later.
+* @return link to sheet
+*/
+if(undefined == FWPage.addOverride){
+  FWPage.prototype.addOverride = function(){
+    if(this.overrideLink) return this.overrideLink;
+    var head = fwDocument.fwTags.fwFind('head');
+    if(!head) fwAbort('Please call addOverride from fwBeforeEndHead or later.')
+    var link = head.fwAddOpt('link');
+    head.fwAddRawOpt('');
+    var myFile = this.resetOverride();
+    fwParameters['styleOverride'].fwSpecify(myFile);
+    link.rel = fwQuote('stylesheet');
+    link.href = fwQuote(fwParameters['styleOverride'].toString());
+    fwParameters['styleOverride'].fwClear();
+    link.type = fwQuote('text/css');
+    this.overrideLink = link;
+    return link;
+  };
+}
+/**
+* Erase or initialize the reset stylesheet.
+* @return FWFile
+*/
+if(undefined == FWPage.resetOverride){
+  FWPage.prototype.resetOverride = function(){
+    var myFile = new FWFile();
+    myFile.fwOpenWrite(this.styleOverridePath(), true);
+    myFile.fwSetEncoding('UTF-8');
+    myFile.fwWrite('');
+    myFile.fwClose();
+    return myFile;
+  }
+};
+/**
+* Convert a string of CSS into a hash.
+* @return object JSON of styles
+*/
+if(undefined == cssToHash){
+  var cssToHash = function(string){
+    var out = {}, string = string.toString().replace(/^"\s*(.+?)\s*"$/, '$1');
+  var pairs = string.split(/\s*;\s*/);
+  for (var i in pairs){
+  var pair = pairs[i].split(/\s*:\s*/);
+  out[pair[0]] = pair[1];
+};
+return out;
+};
+}
+/**
+* Convert a JSON object of style definitions into CSS.
+* @return string CSS style rules
+*/
+if(undefined == hashToCSS){
+  var hashToCSS = function(hash){
+    var out = [];
+    for (var i in hash){
+      var pair = i + ': ' + hash[i];
+      out.push(pair);
+    }
+    return out.join('; ').toString();
+  };
+}
+/**
+* Write CSS into the override sheet.
+* @return void
+*/
+if(undefined == FWTag.setOverride){
+  FWTag.prototype.setOverride = function(content){
+    var sheet = fwPage.addOverride();
+    var myFile = new FWFile();
+    myFile.fwOpenRead(fwPage.styleOverridePath());
+    var existing = myFile.fwReadString(myFile.fwAvailable);
+    myFile.fwClose();
+    var overwrite = false;
+    if(existing && existing.match(this.id.toString().slice(1,-1))){
+      var re = new RegExp('#' + this.id.toString().slice(1,-1) + ' \\{ (.+?) \\}');
+      existing = existing.replace(re, content);
+      content = existing;
+      overwrite = true;
+    }else{
+      content = content + "\n";
+    }
+    myFile.fwOpenWrite(fwPage.styleOverridePath(), overwrite);
+    myFile.fwSetEncoding('UTF-8');
+    myFile.fwWrite(content);
+    myFile.fwClose();
+    this.style = null;
+  }
+};
+/**
+* Read the content of the entire override sheet.
+* @return object JSON of styles
+*/
+if(undefined == FWTag.getOverride){
+  FWTag.prototype.getOverride = function(){
+    var myFile = new FWFile();
+    myFile.fwOpenRead(fwPage.styleOverridePath(), false);
+    var content = myFile.fwReadString(myFile.fwAvailable);
+    myFile.fwClose();
+    var re = new RegExp('#' + this.id.toString().slice(1,-1) + ' \\{ (.+?) \\}');
+    if( null != content.match(re) && content.match(re).length > 0 )
+    return( cssToHash(content.match(re)[1]) );
+    return {};
+  }
+};
+/**
+* Get one CSS attribute of a single tag.
+* attributeName is an attribute (width, padding...) returns value (if set) or null.
+* @return mixed
+*/
+if(undefined == FWTag.getStyle){
+  FWTag.prototype.getStyle = function(attributeName){
+    var styles = this.getAllStyles();
+    return styles[attributeName] || null;
+  };
+}
+/**
+* Get override CSS attributes of a single tag, in format for writing to external stylesheet.
+* attributeName is an attribute (width, padding...) returns value (if set) or false.
+* @return string or false
+*/
+if(undefined == FWTag.getStyleAsRule){
+  FWTag.prototype.getStyleAsRule = function(){
+    if(this.style){
+      return '#' + this.id.toString().slice(1,-1) + ' { ' + this.style.toString().slice(1,-1) + ' }';
+    }else{
+      return false;
+    }
+  }
+}
+/**
+* Get all CSS attributes of a single tag, regardless where they were set.
+* @return JSON object
+*/
+if(undefined == FWTag.getAllStyles){
+  FWTag.prototype.getAllStyles = function(){
+    if (this==null) return null;
+    var styles = {}, overrides = {};
+    if(fwPage.fwElementStyle){
+      styles = cssToHash(fwPage.fwElementStyle(this));
+    }
+    if(fwDocument.fwExternalStylesheets){
+      overrides = this.getOverride();
+      for(var i in overrides){
+        styles[i] = overrides[i];
+      }
+    }
+    if(this.style){
+      var inline = cssToHash(this.style);
+      for (var i in inline) {
+        styles[i] = inline[i];
+      };
+    }
+    return styles;
+  };
+}
+/**
+* Sets a CSS attribute such as "position:absolute" in a tag value 
+* Passing an attribute value of null resets that attribute to default
+* @return void
+*/
+if(undefined == FWTag.setStyle){
+  FWTag.prototype.setStyle = function(attributeName, value){
+    if(this == null || arguments.length < 2) return;
+    if(value.toLowerCase() == 'null') value = null;
+    var styles = {}, external = {};
+    var reset = { /* BACKGROUND */ 'background': 'none', 'background-attachment':
+    'scroll', 'background-clip': 'border-box', 'background-color': 'inherit',
+    'background-image': 'none', 'background-origin': 'padding-box',
+    'background-position': '0% 0%', 'background-repeat': 'repeat', 'background-size':
+    'auto', /* BORDERS */ 'border-collapse': 'separate', 'border': 'none',
+    'border-width': '0', 'border-style': 'none', 'border-color': '#000000',
+    'border-width': 'none', /* top */ 'border-top': 'none', 'border-top-color':
+    '#000000', 'border-top-style': 'none', 'border-top-width': '0', /* right */
+    'border-right': 'none', 'border-right-color': '#000000', 'border-right-style':
+    'none', 'border-right-width': '0', /* bottom */ 'border-bottom': 'none',
+    'border-bottom-color': '#000000', 'border-bottom-style': 'none',
+    'border-bottom-width': '0', /* left */ 'border-left': 'none', 'border-left-color':
+    '#000000', 'border-left-style': 'none', 'border-left-width': '0', /* border-image */
+    'border-image': 'none', 'border-image-outset': '0', 'border-image-repeat': 'stretch',
+    'border-image-slice': '100%', 'border-image-source': 'none', 'border-image-width':
+    '1', /* border-radius */ 'border-radius': '0', 'border-top-left-radius': '0',
+    'border-top-right-radius': '0', 'border-bottom-left-radius': '0',
+    'border-bottom-right-radius': '0', /* BOX ATTRIBUTES */ 'height': 'auto',
+    'max-height': 'none', 'min-height': '0', 'width': 'auto', 'max-width': 'none',
+    'min-width': '0', 'position': 'static', 'display': 'block', 'visibility': 'visible',
+    'top': 'auto', 'right': 'auto', 'bottom': 'auto', 'left': 'auto', 'float': 'none',
+    'clear': 'none', 'margin': '0', 'margin-top': '0', 'margin-right': '0',
+    'margin-bottom': '0', 'margin-left': '0', 'padding': '0', 'padding-top': '0',
+    'padding-right': '0', 'padding-bottom': '0', 'padding-left': '0', 'opacity': '1',
+    'overflow': 'visible', 'overflow-x': 'visible', 'overflow-y': 'visible', 'z-index':
+    'auto', 'zoom': '1', 'filter': 'none', 'cursor': 'auto', 'box-shadow': 'none',
+    'box-sizing': 'content-box', /* TEXT */ 'color': 'inherit', 'font': 'inherit',
+    'font-family': 'inherit', 'font-size': '1em', 'font-style': 'inherit',
+    'font-variant': 'inherit', 'font-weight': 'inherit', 'letter-spacing': 'inherit',
+    'line-height': 'inherit', 'list-style-image': 'none', 'list-style-position':
+    'outside', 'list-style-type': 'disc', 'list-style': 'disc', 'text-decoration':
+    'none', 'text-indent': '0', 'text-shadow': 'none', 'vertical-align': 'baseline',
+    'white-space': 'normal' };
+    if(fwPage.fwElementStyle){
+      external = cssToHash(fwPage.fwElementStyle(this));
+    }
+    if(fwDocument.fwExternalStylesheets){
+      styles = this.getOverride();
+    }
+    if(this.style){
+      var inlines = cssToHash(this.style);
+      for(var i in inlines){
+        styles[i] = inlines[i];
+      }
+    }
+    if(value == null){
+      if(reset[attributeName] && external[attributeName]){
+        styles[attributeName] = reset[attributeName];
+      }else{
+        delete styles[attributeName];
+      }
+    }else{
+      styles[attributeName] = value;
+    }
+    this.style = fwQuote(hashToCSS(styles));
+    if(fwDocument.fwExternalStylesheets){
+      // write styles to override
+      this.setOverride(this.getStyleAsRule());
+      this.style = null;
+    }
+  };
+}
+</action-javascript>
+</library-action>
+<item-action name="com.wdstudio.styletest" title="StyleTest">
+<action-version version="0.1">
+StyleTest
+Copyright 2013 Walter Lee Davis
+</action-version>
+<action-text name="key_1" title="Attribute" />
+<action-text name="val_1" title=" " advance="no" />
+<action-button name="reset_1" title="↩" advance="no" onclick="reset(1)" width="28"/>
+<action-text name="key_2" title="Attribute" />
+<action-text name="val_2" title=" " advance="no" />
+<action-button name="reset_2" title="↩" advance="no" onclick="reset(2)" width="28"/>
+<action-text name="key_3" title="Attribute" />
+<action-text name="val_3" title=" " advance="no" />
+<action-button name="reset_3" title="↩" advance="no" onclick="reset(3)" width="28"/>
+<action-text name="key_4" title="Attribute" />
+<action-text name="val_4" title=" " advance="no" />
+<action-button name="reset_4" title="↩" advance="no" onclick="reset(4)" width="28"/>
+<action-file name="styleOverride" var />
+<action-javascript>
+<action-include name="style_accessors">
+function reset(num){
+  fwParameters['key_' + num].fwValue = fwParameters['val_' + num].fwValue = '';
+  var myFile = new FWFile();
+  myFile.fwOpenWrite(fwPage.styleOverridePath(), true);
+  myFile.fwSetEncoding('UTF-8');
+  myFile.fwWrite('');
+  myFile.fwClose();
+  return myFile;
+}
+function fwAfterEndHTML(){
+  var thisItem = fwDocument.fwTags.fwFind(fwItem);
+  if(thisItem){
+    //loop over the parameters and change the ones with keys
+    var clear = true;
+    for (var i=1; i < 5; i++) {
+      if(fwParameters['key_' + i].fwValue){
+        thisItem.setStyle(fwParameters['key_' + i].fwValue, fwParameters['val_' + i].fwValue);
+      }
+    };
+    //show the result
+    var styles = thisItem.getAllStyles();
+    thisItem.fwAddRawln('<dl style="font: 11px/12px Geneva, sans-serif"><dt style="font-weight:bold">Style:</dt>');
+    for (var i in styles) {
+      thisItem.fwAddRawln('<dd style="margin-left: 1em">' + i + ': ' + styles[i] + '</dd>');
+    }
+    thisItem.fwAddRawln('</dl>');
+  }
+}
+</action-javascript>
+</item-action>

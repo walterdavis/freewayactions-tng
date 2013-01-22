@@ -1,0 +1,30 @@
+<action-encoding>UTF-8</action-encoding>
+<page-action name="com.wdstudio.css_page" title="CSS Page">
+<action-version version="0.1">
+CSS Page
+Copyright 2012 Walter Lee Davis
+
+Convert a page to CSS, using all text in the PageDiv.
+</action-version>
+<action-javascript>
+function stripTags(str){
+  return str.replace(/<[^>]+?>/g,'').replace(/\t/g, '').replace(/[\r\n]+/g,"\n");
+}
+function fwAfterEndHTML(){
+  var page = fwDocument.fwTags.fwFindAllContent();
+	var dummy = page[0].fwAddEnclosing("", false);
+  var code = '';
+  var divs = fwDocument.fwTags.fwFindAll('div');
+  for(i in divs){
+    var div = divs[i];
+    if(div.id.toString().match(/PageDiv/)){
+      code += stripTags(div.fwToHTML().toString());
+    }
+  }
+  for(i in page){
+    page[i].fwDelete();
+  }
+	dummy.fwAddRaw(code);
+}
+</action-javascript>
+</page-action>
