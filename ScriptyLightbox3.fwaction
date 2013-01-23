@@ -147,7 +147,7 @@ if(undefined == FWTag.removeClassName){
 </library-action>
 <item-action name="com.wdstudio.scripty_lightbox_3" title="ScriptyLightbox3">
 <action-appliesto graphic pass-through/>
-<action-version version="0.1.2">
+<action-version version="0.2.1">
 ScriptyLightbox3
 Copyright 2013 Walter Lee Davis
 
@@ -174,7 +174,9 @@ Yet another lighbox for Freeway Pro
 <value name="left">
 <value name="right">
 </action-popup>
-<action-color name="borderColor" title="Border Color" default="#000000" />
+<action-color name="borderColor" title="Border Color" default="#333333" />
+<action-number name="percentage" title="Maximum size" default="80" />
+<action-label name="%" advance="no" />
 <action-javascript>
 <action-include name="functions">
 function fwInterface(){
@@ -192,8 +194,8 @@ function fwInterface(){
 }
 function fwBeforeEndHead(){
   addPrototype();
-  findOrCreateScriptLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.1.2/scripty_lightbox_3.js');
-  findOrCreateStyleLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.1.2/scripty_lightbox_3.css');
+  findOrCreateScriptLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.2.1/scripty_lightbox_3.js');
+  findOrCreateStyleLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.2.1/scripty_lightbox_3.css');
 }
 function fwBeforeEndBody(){
   var borderColor = fwParameters['borderColor'].fwValue.fwHex;
@@ -214,6 +216,7 @@ function fwBeforeEndBody(){
       var original = (fwParameters.original.fwHasFile ? fwParameters.original : fwParameters.original_page);
       link['href'] = fwQuote(original.toString());
       if(borderColor) link['data-border'] = fwQuote(borderColor);
+      link['data-size'] = fwQuote(parseFloat(fwParameters['percentage'].fwValue) / 100);
       link['data-radius'] = fwQuote(fwParameters['radius'].fwValue);
       if(parseInt(fwParameters.width.fwValue,10) > 0 && parseInt(fwParameters.height.fwValue,10) > 0){
         relText.push( fwParameters.width.fwValue.toString() + 'x' + fwParameters.height.fwValue.toString() );
@@ -230,7 +233,7 @@ function fwBeforeEndBody(){
 </action-javascript>
 </item-action>
 <action name="com.wdstudio.scripty_lightbox_3" title="ScriptyLightbox3" preview-text="&Text;" generates-link height="12" width="100">
-<action-version version="0.1.2">
+<action-version version="0.2.1">
 ScriptyLightbox3
 Copyright 2013 Walter Lee Davis
 
@@ -258,7 +261,9 @@ Yet another lighbox for Freeway Pro
 <value name="left">
 <value name="right">
 </action-popup>
-<action-color name="borderColor" title="Border Color" default="#000000" />
+<action-color name="borderColor" title="Border Color" default="#333333" />
+<action-number name="percentage" title="Maximum size" default="80" />
+<action-label name="%" advance="no" />
 <action-javascript>
 <action-include name="functions">
 function fwInterface(){
@@ -274,12 +279,10 @@ function fwInterface(){
   }
   fwParameters['autoplay'].fwVisible = has_a_movie; 
 }
-function fwBeforeEndHead(){
-  addPrototype();
-  findOrCreateScriptLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.1.2/scripty_lightbox_3.js');
-  findOrCreateStyleLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.1.2/scripty_lightbox_3.css');
-}
 function fwBeforeEndBody(){
+  addPrototype();
+  findOrCreateScriptLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.2.1/scripty_lightbox_3.js');
+  findOrCreateStyleLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.2.1/scripty_lightbox_3.css');
   var borderColor = fwParameters['borderColor'].fwValue.fwHex;
   if(borderColor != undefined){
     borderColor = '#' + borderColor;
@@ -298,6 +301,7 @@ function fwBeforeEndBody(){
       var original = (fwParameters.original.fwHasFile ? fwParameters.original : fwParameters.original_page);
       link['href'] = fwQuote(original.toString());
       if(borderColor) link['data-border'] = fwQuote(borderColor);
+      link['data-size'] = fwQuote(parseFloat(fwParameters['percentage'].fwValue) / 100);
       link['data-radius'] = fwQuote(fwParameters['radius'].fwValue);
       if(parseInt(fwParameters.width.fwValue,10) > 0 && parseInt(fwParameters.height.fwValue,10) > 0){
         relText.push( fwParameters.width.fwValue.toString() + 'x' + fwParameters.height.fwValue.toString() );
