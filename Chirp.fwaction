@@ -524,18 +524,18 @@ if(undefined == FWTag.removeClassName){
 </action-javascript>
 </library-action>
 <item-action name="com.wdstudio.chirp" title="Chirp">
-<action-appliesto xhtmlstrict xhtml html4 />
-<action-version version="0.2">
+<action-appliesto non-html32 />
+<action-version version="0.2.2">
 Chirp
-Copyright 2012 Walter Lee Davis
+Copyright 2012 - 2013 Walter Lee Davis
 
 Add a Twitter feed to your Freeway page.
 </action-version>
 <action-file name="chirp_initializer" var />
-<action-file name="styleOverride" var />
 <action-text name="handle" title="Twitter Handle" />
 <action-checkbox name="limit" title="Limit Tweets" default=no />
 <action-number name="maximum" title=" " default=5 advance=no />
+<action-file name="styleOverride" var />
 <action-javascript>
 <action-include name="cdn_functions">
 <action-include name="classname_functions">
