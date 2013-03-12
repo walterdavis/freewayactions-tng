@@ -1,0 +1,1395 @@
+<action-encoding>UTF-8</action-encoding>
+<library-action name="style_accessors">
+<action-version version="1.2.1">
+Style Accessors
+
+Get and set styles on any element, regardless where they were initially defined.
+
+The MIT License (MIT)
+Copyright (c) 2013 Walter Lee Davis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this
+software and associated documentation files (the "Software"), to deal in the Software
+without restriction, including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</action-version>
+<action-javascript>
+/**
+* Does this page use a root-based Resources folder?
+* @return boolean
+*/
+if(undefined == FWPage.hasRootResourcesFolder){
+  FWPage.prototype.hasRootResourcesFolder = function(){
+    var head = fwDocument.fwTags.fwFind('head');
+    if(!head) fwAbort('Please call headLinks from fwBeforeEndHead or later.');
+    var links = head.fwFindAll('link', 'href');
+    for(var i in links){
+      if(links[i].href){
+        var link = links[i].href.toString();
+        var page = this.fwFileName.toString().split('.').shift();
+        if(link.match('../css') && link.indexOf(page) > 0){
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+}
+/**
+* Does this page use a Resources folder?
+* @return boolean
+*/
+if(undefined == FWPage.hasNoResourcesFolder){
+  FWPage.prototype.hasNoResourcesFolder = function(){
+    return (! fwClearGif.toString().match('Resources/'))
+  }
+}
+/**
+* Find the folder where the style should be saved
+* @return string
+*/
+if(undefined == FWPage.styleFolder){
+  FWPage.prototype.styleFolder = function(){
+    var rootFolder = fwDocument.fwPages.fwItems[0].fwFolder.fwHttpPath();
+    if(this.hasNoResourcesFolder()){
+      return '/' + this.fwFolder.fwHttpPath();
+    }
+    if(this.hasRootResourcesFolder()){
+      return rootFolder + '/css/';
+    }
+    return '/' + this.fwFolder.fwHttpPath() + 'css/';
+  };
+}
+/**
+* Define a URL for the override sheet for this page
+* @return string relative URL to override sheet
+*/
+if(undefined == FWPage.styleOverrideURL){
+  FWPage.prototype.styleOverrideURL = function(){
+    var folder = this.styleFolder();
+    return folder + this.basename() + '_override.css';
+  };
+}
+/**
+* Define a path to the override sheet for this page.
+* @return string root-relative path to the override sheet
+*/
+if(undefined == FWPage.styleOverridePath){
+  FWPage.prototype.styleOverridePath = function(){
+    var rootFolder = fwDocument.fwPages.fwItems[0].fwFolder;
+    if(!rootFolder) fwAbort('Could not locate the root folder. Make sure there is at least one page in it.')
+    var rootFolderPath =  rootFolder.fwHttpPath(null, true);    
+    return (rootFolderPath + this.styleOverrideURL()).replace(/\//g, ':');
+  };
+}
+/**
+* Basename for the override sheet
+* @return string page filename without extension
+*/
+if(undefined == FWPage.basename){
+  FWPage.prototype.basename = function(){
+    var filename = this.fwFileName.toString().split('.');
+    if(this.hasRootResourcesFolder()){
+      filename = this.fwHttpPath().toString().replace(/\//g,'_').split('.');
+    }
+    filename.pop();
+    return filename.join('.');
+  };
+}
+/**
+* Add a link to an override stylesheet, and create the file for that sheet.
+* Only alters the page once per publish cycle.
+* Must be called from fwBeforeEndHead() or later.
+* @return link to sheet
+*/
+if(undefined == FWPage.addOverride){
+  FWPage.prototype.addOverride = function(){
+    if(this.overrideLink) return this.overrideLink;
+    var head = fwDocument.fwTags.fwFind('head');
+    if(!head) fwAbort('Please call addOverride from fwBeforeEndHead or later.')
+    var link = head.fwAddOpt('link');
+    head.fwAddRawOpt('');
+    var myFile = this.resetOverride();
+    fwParameters['styleOverride'].fwSpecify(myFile);
+    link.rel = fwQuote('stylesheet');
+    link.href = fwQuote(fwParameters['styleOverride'].toString());
+    fwParameters['styleOverride'].fwClear();
+    link.type = fwQuote('text/css');
+    this.overrideLink = link;
+    return link;
+  };
+}
+/**
+* Erase or initialize the reset stylesheet.
+* @return FWFile
+*/
+if(undefined == FWPage.resetOverride){
+  FWPage.prototype.resetOverride = function(){
+    var myFile = new FWFile();
+    myFile.fwOpenWrite(this.styleOverridePath(), true);
+    myFile.fwSetEncoding('UTF-8');
+    myFile.fwWrite('');
+    myFile.fwClose();
+    return myFile;
+  }
+};
+/**
+* Convert a string of CSS into a hash.
+* @return object JSON of styles
+*/
+if(undefined == cssToHash){
+  var cssToHash = function(string){
+    var out = {}, string = string.toString().replace(/^"\s*(.+?)\s*"$/, '$1');
+  var pairs = string.split(/\s*;\s*/);
+  for (var i in pairs){
+  var pair = pairs[i].split(/\s*:\s*/);
+  out[pair[0]] = pair[1];
+};
+return out;
+};
+}
+/**
+* Convert a JSON object of style definitions into CSS.
+* @return string CSS style rules
+*/
+if(undefined == hashToCSS){
+  var hashToCSS = function(hash){
+    var out = [];
+    for (var i in hash){
+      var pair = i + ': ' + hash[i];
+      out.push(pair);
+    }
+    return out.join('; ').toString();
+  };
+}
+/**
+* Write CSS into the override sheet.
+* @return void
+*/
+if(undefined == FWTag.setOverride){
+  FWTag.prototype.setOverride = function(content){
+    var sheet = fwPage.addOverride();
+    var myFile = new FWFile();
+    myFile.fwOpenRead(fwPage.styleOverridePath());
+    var existing = myFile.fwReadString(myFile.fwAvailable);
+    myFile.fwClose();
+    var overwrite = false;
+    if(existing && existing.match(this.id.toString().slice(1,-1))){
+      var re = new RegExp('#' + this.id.toString().slice(1,-1) + ' \\{ (.+?) \\}');
+      existing = existing.replace(re, content);
+      content = existing;
+      overwrite = true;
+    }else{
+      content = content + "\n";
+    }
+    myFile.fwOpenWrite(fwPage.styleOverridePath(), overwrite);
+    myFile.fwSetEncoding('UTF-8');
+    myFile.fwWrite(content);
+    myFile.fwClose();
+    this.style = null;
+  }
+};
+/**
+* Read the content of the entire override sheet.
+* @return object JSON of styles
+*/
+if(undefined == FWTag.getOverride){
+  FWTag.prototype.getOverride = function(){
+    var myFile = new FWFile();
+    myFile.fwOpenRead(fwPage.styleOverridePath(), false);
+    var content = myFile.fwReadString(myFile.fwAvailable);
+    myFile.fwClose();
+    var re = new RegExp('#' + this.id.toString().slice(1,-1) + ' \\{ (.+?) \\}');
+    if( null != content.match(re) && content.match(re).length > 0 )
+    return( cssToHash(content.match(re)[1]) );
+    return {};
+  }
+};
+/**
+* Get one CSS attribute of a single tag.
+* attributeName is an attribute (width, padding...) returns value (if set) or null.
+* @return mixed
+*/
+if(undefined == FWTag.getStyle){
+  FWTag.prototype.getStyle = function(attributeName){
+    var styles = this.getAllStyles();
+    return styles[attributeName] || null;
+  };
+}
+/**
+* Get override CSS attributes of a single tag, in format for writing to external stylesheet.
+* attributeName is an attribute (width, padding...) returns value (if set) or false.
+* @return string or false
+*/
+if(undefined == FWTag.getStyleAsRule){
+  FWTag.prototype.getStyleAsRule = function(){
+    if(this.style){
+      return '#' + this.id.toString().slice(1,-1) + ' { ' + this.style.toString().slice(1,-1) + ' }';
+    }else{
+      return false;
+    }
+  }
+}
+/**
+* Get all CSS attributes of a single tag, regardless where they were set.
+* @return JSON object
+*/
+if(undefined == FWTag.getAllStyles){
+  FWTag.prototype.getAllStyles = function(){
+    if (this==null) return null;
+    var styles = {}, overrides = {};
+    if(fwPage.fwElementStyle){
+      styles = cssToHash(fwPage.fwElementStyle(this));
+    }
+    if(fwDocument.fwExternalStylesheets){
+      overrides = this.getOverride();
+      for(var i in overrides){
+        styles[i] = overrides[i];
+      }
+    }
+    if(this.style){
+      var inline = cssToHash(this.style);
+      for (var i in inline) {
+        styles[i] = inline[i];
+      };
+    }
+    return styles;
+  };
+}
+/**
+* Sets a CSS attribute such as "position:absolute" in a tag value 
+* Passing an attribute value of null resets that attribute to default
+* @return void
+*/
+if(undefined == FWTag.setStyle){
+  FWTag.prototype.setStyle = function(attributeName, value){
+    if(this == null || arguments.length < 2) return;
+    if(typeof value == 'string' && value.toLowerCase() == 'null') value = null;
+    var styles = {}, external = {};
+    var reset = { /* BACKGROUND */ 'background': 'none', 'background-attachment':
+    'scroll', 'background-clip': 'border-box', 'background-color': 'inherit',
+    'background-image': 'none', 'background-origin': 'padding-box',
+    'background-position': '0% 0%', 'background-repeat': 'repeat', 'background-size':
+    'auto', /* BORDERS */ 'border-collapse': 'separate', 'border': 'none',
+    'border-width': '0', 'border-style': 'none', 'border-color': '#000000',
+    'border-width': 'none', /* top */ 'border-top': 'none', 'border-top-color':
+    '#000000', 'border-top-style': 'none', 'border-top-width': '0', /* right */
+    'border-right': 'none', 'border-right-color': '#000000', 'border-right-style':
+    'none', 'border-right-width': '0', /* bottom */ 'border-bottom': 'none',
+    'border-bottom-color': '#000000', 'border-bottom-style': 'none',
+    'border-bottom-width': '0', /* left */ 'border-left': 'none', 'border-left-color':
+    '#000000', 'border-left-style': 'none', 'border-left-width': '0', /* border-image */
+    'border-image': 'none', 'border-image-outset': '0', 'border-image-repeat': 'stretch',
+    'border-image-slice': '100%', 'border-image-source': 'none', 'border-image-width':
+    '1', /* border-radius */ 'border-radius': '0', 'border-top-left-radius': '0',
+    'border-top-right-radius': '0', 'border-bottom-left-radius': '0',
+    'border-bottom-right-radius': '0', /* BOX ATTRIBUTES */ 'height': 'auto',
+    'max-height': 'none', 'min-height': '0', 'width': 'auto', 'max-width': 'none',
+    'min-width': '0', 'position': 'static', 'display': 'block', 'visibility': 'visible',
+    'top': 'auto', 'right': 'auto', 'bottom': 'auto', 'left': 'auto', 'float': 'none',
+    'clear': 'none', 'margin': '0', 'margin-top': '0', 'margin-right': '0',
+    'margin-bottom': '0', 'margin-left': '0', 'padding': '0', 'padding-top': '0',
+    'padding-right': '0', 'padding-bottom': '0', 'padding-left': '0', 'opacity': '1',
+    'overflow': 'visible', 'overflow-x': 'visible', 'overflow-y': 'visible', 'z-index':
+    'auto', 'zoom': '1', 'filter': 'none', 'cursor': 'auto', 'box-shadow': 'none',
+    'box-sizing': 'content-box', /* TEXT */ 'color': 'inherit', 'font': 'inherit',
+    'font-family': 'inherit', 'font-size': '1em', 'font-style': 'inherit',
+    'font-variant': 'inherit', 'font-weight': 'inherit', 'letter-spacing': 'inherit',
+    'line-height': 'inherit', 'list-style-image': 'none', 'list-style-position':
+    'outside', 'list-style-type': 'disc', 'list-style': 'disc', 'text-decoration':
+    'none', 'text-indent': '0', 'text-shadow': 'none', 'vertical-align': 'baseline',
+    'white-space': 'normal' };
+    if(fwPage.fwElementStyle){
+      external = cssToHash(fwPage.fwElementStyle(this));
+    }
+    if(fwDocument.fwExternalStylesheets){
+      styles = this.getOverride();
+    }
+    if(this.style){
+      var inlines = cssToHash(this.style);
+      for(var i in inlines){
+        styles[i] = inlines[i];
+      }
+    }
+    if(value == null){
+      if(reset[attributeName] && external[attributeName]){
+        styles[attributeName] = reset[attributeName];
+      }else{
+        delete styles[attributeName];
+      }
+    }else{
+      styles[attributeName] = value;
+    }
+    this.style = fwQuote(hashToCSS(styles));
+    if(fwDocument.fwExternalStylesheets){
+      // write styles to override
+      this.setOverride(this.getStyleAsRule());
+      this.style = null;
+    }
+  };
+}
+</action-javascript>
+</library-action>
+<library-action name="cdn_functions">
+<action-javascript>
+/**
+ * Write a script to an external file.
+ * name: common name of script (domloaded, windowload, custom)
+ * fileParameter: the action-file that holds this file
+ * content: string or array of strings containing the content
+ * returns URL to generated file, for linking purposes
+ */
+var createExternalScript = function(name, fileParameter, content){
+  if(!content.join){
+    content = [content];
+  }
+  var myFile = new FWFile();
+  if(fwParameters[fileParameter].fwHasFile){
+    myFile.fwOpenWrite(fwParameters[fileParameter].fwValue, true, 'TEXT');
+    myFile.fwSetEncoding('UTF-8');
+  }else{
+    var path = fwPage.fwHttpPath();
+    path = path.replace(/\//g, '_').split('.');
+    var filename = path.pop();
+    path = path.join('.') + '_' + name + '.js';
+    myFile.fwOpenWrite(path, true, 'TEXT');
+    myFile.fwSetEncoding('UTF-8');
+  }
+  for (var i=0; i < content.length; i++) {
+    myFile.fwWrite(content[i] + "\n");
+  };
+  myFile.fwClose();
+  fwParameters[fileParameter].fwSpecify(myFile);
+  var filePath = fwParameters[fileParameter].toString();
+  fwParameters[fileParameter].fwClear();
+  return filePath;
+}
+
+/**
+* Create a CDN link to a JavaScript library. 
+* name: common filename for the library (prototype, scriptaculous, jquery)
+* path: (optional) fully-qualified URL to the CDN-hosted file
+* (path is not needed if you are linking to prototype or scriptaculous)
+* WARNING! changes any existing link in the page to the library to the 
+* one specified in path or defaults
+* returns reference to the script
+*/
+var findOrCreateScriptLink = function(name, path){
+  var head = fwDocument.fwTags.fwFind('head');
+  var script = pageHasLinkToScript(name), load = '';
+  var libs = {
+    'prototype': 'http://ajax.googleapis.com/ajax/libs/prototype/1.7/prototype.js',
+    'scriptaculous': 'http://ajax.googleapis.com/ajax/libs/scriptaculous/1.9/scriptaculous.js'
+  };
+  if(!libs[name]){
+    if(!!path){
+      libs[name] = path;
+    }else{
+      fwAbort('Please provide a URL for “' + name + '”. Publishing cannot continue.');
+    }
+  }
+  if(!script){
+    script = head.fwAdd('script', true);
+    script.fwAddRawOpt('');
+    head.fwAddRawOpt('');
+  }
+  //catch any load variables from scriptaculous
+  if(name == 'scriptaculous' && script.src && script.src.toString().match(/\?load=/)){
+    load = script.src.toString().match(/(\?load=.+?)"/)[1]; //"
+  }
+  //overwrite the path to the script to make it current
+  script.src = fwQuote(libs[name] + load);
+  script.type = fwQuote('text/javascript');
+  script.charset = fwQuote('utf-8');
+  return script;
+}
+
+var pageHasLinkToScript = function(name){
+  var script = false;
+  var scripts = fwDocument.fwTags.fwFindAll('script');
+  for(i in scripts){
+    if(scripts[i].src && scripts[i].src.toString().match(new RegExp(name + '\.js'))){
+      script = scripts[i];
+    }
+  }
+  return script;
+}
+
+var findOrCreateStyleLink = function(name, path){
+  var head = fwDocument.fwTags.fwFind('head');
+  var styles = head.fwFindAll('link'), re = new RegExp(name + '\.css');
+  var findStyleLink = function(re){
+    for(i in styles){
+      if(styles[i].href && styles[i].href.toString().match(re)){
+        return styles[i];
+      }
+    }
+  }
+  var style = findStyleLink(re);
+  if(!style){
+    style = head.fwAdd('link', false);
+    head.fwAddRawOpt('');
+  }
+  style.href = fwQuote(path);
+  style.rel = fwQuote('stylesheet');
+  style.type = fwQuote('text/css');
+  style.charset = fwQuote('utf-8');
+  return style;
+}
+
+/**
+* Wrapper to simplify function call
+* returns nothing
+*/
+var addPrototype = function(){
+  findOrCreateScriptLink('prototype');
+}
+
+/**
+* Add scriptaculous to the page, and load any modules needed if fewer than all.
+* modules: comma-separated string or array of scriptaculous modules
+* returns nothing
+*/
+
+var addScriptaculous = function(modules){
+  var scriptaculousLibs = ["builder", "effects", "dragdrop", "controls", "slider", "sound"];
+  var load = [];
+  if(modules.join){
+    modules = modules.join();
+  }
+  var script = findOrCreateScriptLink('scriptaculous');
+  if(script.src.toString().match(/\?load=/)){
+    modules += script.src.toString().split(/\?load=/)[1];
+  }
+  for (var i=0; i < scriptaculousLibs.length; i++) {
+    var re = new RegExp(scriptaculousLibs[i]);
+    if(modules.match(re))
+    load.push(scriptaculousLibs[i]);
+  };
+  if(load.length > 0 && load.length < 6){
+    load = '?load=' + load.join(',');
+    script.src = script.src.toString().replace(/\?load=[^"]+/, '').replace(/"$/, load + '"'); //"
+  }
+}
+
+
+</action-javascript>
+</library-action>
+<library-action name="classname_functions">
+<action-javascript>
+
+if(!'test'.strip) String.prototype.strip = function() {
+  return this.replace(/^\s+/, '').replace(/\s+$/, '');
+};
+
+if(undefined == FWTag.hasClassName){
+  FWTag.prototype.hasClassName = function(className) {
+    className = fwQuote(className,'','"'); //"
+    var elementClassName = (this["class"]) ? fwQuote(this["class"],'','"') : ''; //"
+    return ((elementClassName.length > 0) && (elementClassName == className || new RegExp("\\b" + className + "\\b").test(elementClassName)));
+  };
+}
+if(undefined == FWTag.addClassName){
+  FWTag.prototype.addClassName = function(className) {
+    className = fwQuote(className,'','"'); //"
+    if (!this.hasClassName(className)){
+      var elementClassName = (this["class"]) ? fwQuote(this["class"],'','"') : ''; //"
+      var out = (elementClassName + ' ' + className).strip();
+      this["class"] = fwQuote(out);
+      return this;
+    }
+  };
+}
+if(undefined == FWTag.removeClassName){
+  FWTag.prototype.removeClassName = function(className) {
+    var className = fwQuote(className,'','"');//"
+    var elementClassName = (this['class']) ? fwQuote(this['class'],'','"') : '';//"
+    elementClassName = elementClassName.replace(
+      new RegExp("(^|\\s+)" + className + "(\\s+|$)"), ' ').strip();
+    this['class'] = (elementClassName.length > 0) ? fwQuote(elementClassName) : null;
+    return this;
+  };
+}
+</action-javascript>
+</library-action>
+<library-action name="scriptyHandlerFunctions">
+<action-javascript>
+  //mandatory -- set this to true in any action that uses the prototype/scriptaculous stack
+  var scripty = true;
+  //set this to true in order to load the un-packed versions of the libraries
+  var debug = false;
+  if(undefined == in_array){
+    function in_array(theArray,search_term) {
+      var i = theArray.length;
+      if (i > 0) {
+        do {
+          if (theArray[i] === search_term) {
+            return true;
+          }
+        } while (i--);
+      }
+      return false;
+    }
+  }
+  function checkForUpdates(actionId,actionVersion){
+  //example: action-button name="checkUpdates" label="Check for Updates" onClick=checkForUpdates(1,1.4)
+    if(fwLaunchURL) {
+      fwLaunchURL('http://actionsforge.com/actions/' + actionId + '/version/' + actionVersion);
+    }else{
+      var osa=new FWOSAInterpreter; 
+      osa.fwWrite('open location "http://actionsforge.com/actions/' + actionId + '/version/' + actionVersion + '"'); 
+      osa.fwCompile(); 
+      osa.fwRun(); 
+    }
+  }
+  if(undefined == String.strip){
+    String.prototype.strip = function() {
+      return this.replace(/^\s+/, '').replace(/\s+$/, '');
+    }
+  }
+
+  var hasClassName = function(element, className) {
+    return element.hasClassName(className);
+  };
+
+  var addClassName = function(element, className) {
+    return element.addClassName(className);
+  };
+
+  var removeClassName = function(element, className) {
+    return element.removeClassName(className);
+  };
+  
+  function GetPageDiv(){
+    var divs = fwDocument.fwTags.fwFindAll('div');
+    for (i in divs){
+      if (divs[i] && divs[i].id && divs[i].id.toString().indexOf('PageDiv') > -1) return divs[i];
+    }
+    return false;
+  }
+
+  function AddLibraryScript(theTag, theLibraryName)
+  {
+    var scriptTag = theTag.fwAddJavaScript();
+    var theMarkup = fwMarkups[theLibraryName];
+    theMarkup.fwConvertLineEndings = true;
+    scriptTag.fwAddRaw(theMarkup);
+    theTag.fwAddRawln('');
+  }
+
+  function AddEventObserver(theTag, theFunction, theObject, theEvent)
+  {
+    var scriptTag = theTag.fwAddJavaScript();
+    var theMarkup = fwParameters[theFunction].toString();
+    theMarkup.fwConvertLineEndings = true;
+    scriptTag.fwAddRaw('Event.observe(');
+    if(theObject != 'window') theObject = fwQuote(theObject,"'");
+    scriptTag.fwAddRaw(theObject + ', ');
+    scriptTag.fwAddRaw(fwQuote(theEvent,"'") + ', ');
+    scriptTag.fwAddRawln('function(evt){');
+    scriptTag.fwAddRaw(theMarkup);
+    scriptTag.fwAddRawln('');
+    scriptTag.fwAddRawln('});');
+    theTag.fwAddRawln('');
+  }
+
+  function AddObserver(theTag, theFunction, theObject, theEvent)
+  {
+    var scriptTag = theTag.fwAddJavaScript();
+    if(theObject != 'document') theObject = '$(' + fwQuote(theObject,"'") +')';
+    var theMarkup = fwParameters[theFunction].toString();
+    theMarkup.fwConvertLineEndings = true;
+    if(theObject != 'document') scriptTag.fwAddRawln("document.observe('dom:loaded',function(){");
+    scriptTag.fwAddRaw(theObject + '.observe(');
+    scriptTag.fwAddRaw(fwQuote(theEvent,"'") + ', ');
+    scriptTag.fwAddRawln('function(evt){');
+    scriptTag.fwAddRaw(theMarkup);
+    scriptTag.fwAddRawln('');
+    scriptTag.fwAddRawln('});');
+    if(theObject != 'document') scriptTag.fwAddRawln('});');
+    theTag.fwAddRawln('');
+  }
+
+  function lastOrders(){
+    var actions = fwPage.fwFindAllActions();
+    var scripties = new Array();
+    for (i in actions){
+      if (actions[i].scripty == true) scripties.push(actions[i]);
+    }
+    return this === scripties[scripties.length -1];
+  }
+
+  var gLibraries = ["builder", "effects", "dragdrop", "controls", "slider", "sound"];
+  
+  // Clean up the list of libraries by sorting them in their correct order (according to scripty specs) and removing dupes
+  function cleanLibs()
+  {
+    fwPage.scriptyLibs.sort();
+    // Get rid of duplicates and out of range values
+    var i = 0;
+    while(i < fwPage.scriptyLibs.length)
+      if(fwPage.scriptyLibs[i+1] && fwPage.scriptyLibs[i] == fwPage.scriptyLibs[i+1])
+        fwPage.scriptyLibs.splice(i+1, 1);
+      else if(fwPage.scriptyLibs[i] > gLibraries.length-1 || fwPage.scriptyLibs[i] < 0)
+        fwPage.scriptyLibs.splice(i, 1);
+      else
+        i++;
+  }
+  
+  // Build a string containing the scripty libraries used, or return "" if all are used or none are specified
+  function getLibs()
+  {
+    var scriptyLibs = "";
+    if(fwPage.scriptyLibs)
+    {
+      if(fwPage.scriptyLibs.length == gLibraries.length)
+      {
+        // All scriptyLibs are being used so don't specify any
+      }  
+      else
+      {
+        scriptyLibs += "?load=";
+        for(var i in fwPage.scriptyLibs)
+          scriptyLibs += gLibraries[fwPage.scriptyLibs[i]] + ",";
+        scriptyLibs = scriptyLibs.substring(0, scriptyLibs.length-1);
+      }
+    }
+    return scriptyLibs;
+  }
+
+  function LinkFileToHead(theTag, file){
+    // Get the list of individual scriptyLibs and add it to the end of the scripty reference
+    var scriptyLibs = getLibs();
+    var scriptTag = theTag.fwAdd("script", true);
+    scriptTag.src = fwQuote((!file.match("scriptaculous") ? file : file+scriptyLibs));
+    scriptTag.type = fwQuote("text/javascript");
+    scriptTag.fwAddRawOpt();
+    theTag.fwAddRawOpt();
+  }
+  
+  function LinkRemoteFileToHead(theTag, file){
+    var path = "http://ajax.googleapis.com/ajax/libs/"
+    var scriptTag = theTag.fwAdd("script", true);
+    // Get the list of individual scriptyLibs and add to the end of the scripty reference
+    var scriptyLibs = getLibs();
+    if(parseInt(fwFreewayVersion.replace(/\.?(\w\d)?/g, "")) >= 562){
+      scriptTag.src = fwQuote(path + (file.match("pro") ? "prototype/1.7.0.0/prototype.js" : "scriptaculous/1.9.0/scriptaculous.js"+scriptyLibs));
+    }else if(parseFloat(fwFreewayVersion) >= 5.5){
+      scriptTag.src = fwQuote(path + (file.match("pro") ? "prototype/1.6.1.0/prototype.js" : "scriptaculous/1.8.3/scriptaculous.js"+scriptyLibs));
+    }else{
+      scriptTag.src = fwQuote(path + (file.match("pro") ? "prototype/1.6.0.2/prototype.js" : "scriptaculous/1.8.1/scriptaculous.js"+scriptyLibs));
+    }
+    scriptTag.type = fwQuote("text/javascript");
+    scriptTag.fwAddRawOpt();
+    theTag.fwAddRawOpt();
+  }
+
+  function AddFiles(filesString, scriptyLibs /*number or array of numbers*/){
+    // Cleanup if arguments are missing
+    if(filesString.constructor == Number || filesString.constructor == Array)  {
+      scriptyLibs = filesString;
+      fileString = "";
+    }
+    var theHead = fwDocument.fwTags.fwFind("head");
+    var connected = function(){
+      return true;
+      if(fwShellCommand){
+        return fwShellCommand('ping -c1 -i1 http://ajax.googleapis.com');
+      }else{
+        var osa=new FWOSAInterpreter; 
+        osa.fwWrite('do shell script "curl ajax.googleapis.com"'); 
+        osa.fwCompile(); 
+        return osa.fwRun();
+      }
+    }
+    var useCustom = filesString && filesString.length > 0;
+    var path = this.fwPathName;
+    var prefix = path.substring(0, path.lastIndexOf(":")) + ':Support Files~:';
+    if(parseInt(fwFreewayVersion.replace(/\.?(\w\d)?/g, "")) >= 562){
+      var canon = 'prototype1700packer,prototype1700,scriptaculous190packer,scriptaculous190'.split(',');
+    }else if(parseFloat(fwFreewayVersion) >= 5.5){
+      var canon = 'prototype1610packer,prototype1610,scriptaculous183packer,scriptaculous183'.split(',');
+    }else{
+      var canon = 'prototype1602packer,prototype1602,scriptaculous181packer,scriptaculous181'.split(',');
+    }
+    var files = (useCustom) ? filesString.split(',') : canon;
+
+    if(scriptyLibs){
+      // Make the scriptyLibs argument an array if it isn't one already
+      scriptyLibs = scriptyLibs.constructor == Array ? scriptyLibs : [scriptyLibs];
+      // Create or add the libraries used to a page variable
+      if(!fwPage.scriptyLibs)
+      fwPage.scriptyLibs = scriptyLibs;
+      else
+      fwPage.scriptyLibs = fwPage.scriptyLibs.concat(scriptyLibs);
+    }
+
+    // Make the overall library list object variable if it doesn't exist
+    if(!fwPage.libsList)
+    fwPage.libsList = new Object();
+
+    for (i in files){
+      var file = files[i];
+      if (file && !fwPage.libsList[file]){
+        myFile = new FWFile;
+        myFile.fwOpenRead(prefix + file + '.js');
+        myFile.fwClose();
+        if (fwParameters[file]){
+          fwParameters[file].fwSpecify(myFile);
+          var path = fwParameters[file].toString();
+          if(useCustom == true)
+          fwPage.libsList[file] = path;
+          fwParameters[file].fwClear();
+        }else{
+          fwAlert(ParamString(kFileNotFound, file, ".js"));
+        }
+      }
+    }
+
+    if(lastOrders()){
+      if(parseInt(fwFreewayVersion.replace(/\.?(\w\d)?/g, "")) >= 562){
+        if(fwPage.libsList['prototype1700packer'] && fwPage.libsList['prototype1700'])
+          fwPage.libsList['prototype1700packer'] = null;
+        if(fwPage.libsList['scriptaculous190packer'] && fwPage.libsList['scriptaculous190'])
+          fwPage.libsList['scriptaculous190packer'] = null;
+      }else if(parseFloat(fwFreewayVersion) >= 5.5){
+        if(fwPage.libsList['prototype1610packer'] && fwPage.libsList['prototype1610'])
+          fwPage.libsList['prototype1610packer'] = null;
+        if(fwPage.libsList['scriptaculous183packer'] && fwPage.libsList['scriptaculous183'])
+          fwPage.libsList['scriptaculous183packer'] = null;
+      }else{
+        if(fwPage.libsList['prototype1602packer'] && fwPage.libsList['prototype1602'])
+          fwPage.libsList['prototype1602packer'] = null;
+        if(fwPage.libsList['scriptaculous181packer'] && fwPage.libsList['scriptaculous181'])
+          fwPage.libsList['scriptaculous181packer'] = null;
+      }
+
+      // Clean the list of individual libs
+      if(fwPage.scriptyLibs) cleanLibs();
+
+      for (i in canon){
+        if (fwPage.libsList[canon[i]]){
+          var file = fwPage.libsList[canon[i]];
+          connected() ? LinkRemoteFileToHead(theHead, file) : LinkFileToHead(theHead, file);
+          delete fwPage.libsList[canon[i]];
+        }
+      }
+      for ( i in fwPage.libsList )
+        LinkFileToHead(theHead, fwPage.libsList[i]);
+    }
+  }
+    
+  function SetCSSAttribute(tag, attributeName, attributeValue) { 
+    return tag.setStyle(attributeName, attributeValue);
+  } 
+  function GetCSSAttribute(tag, attributeName) { 
+    return tag.getStyle(attributeName);
+  }
+  
+  function GetWidth(tag){
+    //calculates total width of CSS styled element
+    // somewhat naive: border * 2 + margin + padding + width
+    var width = GetCSSAttribute(tag,'width');
+    if(width) {
+      width = parseInt(width.toString().replace(/[^\d+]/g,''),10);
+    }else{
+      width = 0;
+    }
+    var border = GetCSSAttribute(tag,'border');
+    if(border){
+      var b = border.match(/\d+px/);
+      width += parseInt(b.toString().replace(/[^\d+]/g,'') * 2,10);
+    }
+    var padding = GetCSSAttribute(tag,'padding');
+    if (padding){
+      padding = padding.toString().replace(/[^\d ]/g,'').split(' ');
+      switch(padding.length){
+        case 4:
+        case 3:
+          width += parseInt(padding[1],10);
+          width += parseInt(padding[3],10);
+          break;
+        case 2:
+          width += parseInt(padding[1] * 2,10);
+          break;
+        case 1:
+          width += parseInt(padding[0] * 2,10);
+          break;
+        default:
+        break;
+      }
+    }
+    var margin = GetCSSAttribute(tag,'margin');
+    if (margin){
+      margin = margin.toString().replace(/[^\d ]/g,'').split(' ');
+      switch(margin.length){
+        case 4:
+        case 3:
+          width += parseInt(margin[1],10);
+          width += parseInt(margin[3],10);
+          break;
+        case 2:
+          width += parseInt(margin[1] * 2,10);
+          break;
+        case 1:
+          width += parseInt(margin[0] * 2,10);
+          break;
+        default:
+        break;
+      }
+    }
+    return width + 'px';
+  }
+  
+  function GetHeight(tag){
+    //calculates total height of CSS styled element
+    // somewhat naive: border * 2 + margin + padding + height
+    var height = GetCSSAttribute(tag,'height');
+    var minHeight = GetCSSAttribute(tag,'min-height');
+    if(height){
+      height = parseInt(height.toString().replace(/[^\d+]/g,''),10);
+    }else if(minHeight){
+      height = parseInt(minHeight.toString().replace(/[^\d+]/g,''),10);
+    }else{
+      height = 0;
+    }
+    var border = GetCSSAttribute(tag,'border');
+    if(border){
+      var b = border.match(/\d+px/);
+      height += parseInt(b.toString().replace(/[^\d+]/g,'') * 2,10);
+    }
+    var padding = GetCSSAttribute(tag,'padding');
+    if (padding){
+      padding = padding.toString().replace(/[^\d ]/g,'').split(' ');
+      switch(padding.length){
+        case 4:
+        case 3:
+          height += parseInt(padding[0],10);
+          height += parseInt(padding[2],10);
+          break;
+        case 2:
+        case 1:
+          height += parseInt(padding[0] * 2,10);
+          break;
+        default:
+        break;
+      }
+    }
+    var margin = GetCSSAttribute(tag,'margin');
+    if (margin){
+      margin = margin.toString().replace(/[^\d ]/g,'').split(' ');
+      switch(margin.length){
+        case 4:
+        case 3:
+          height += parseInt(margin[0],10);
+          height += parseInt(margin[2],10);
+          break;
+        case 2:
+        case 1:
+          height += parseInt(margin[0] * 2,10);
+          break;
+        default:
+        break;
+      }
+    }
+    return height + 'px';
+  }
+  function getPosition(item){
+    if(!item['_top']) item['_top'] = item.fwTop;
+    if(!item['_left']) item['_left'] = item.fwLeft;
+    if(item.fwParent){
+      var p = item.fwParent;
+      if(p.toString().indexOf("PageDiv") < 0){
+        p['_top'] = item._top + p.fwTop;
+        p['_left'] = item._left + p.fwLeft;
+        return getPosition(p);
+      }
+    }
+    return [item._top,item._left];
+  }
+  function clonePosition(target,source){
+    pos = ['top','left','bottom','right','z-index','position'];
+    if(source){
+      for(var i = 0; i < pos.length; i++){
+        if(GetCSSAttribute(source,pos[i])){
+          SetCSSAttribute(target,pos[i],GetCSSAttribute(source,pos[i]));
+        }
+      }
+      if(GetCSSAttribute(source,'height'))
+        SetCSSAttribute(target,'height',GetHeight(source));
+      if(GetCSSAttribute(source,'width'))
+        SetCSSAttribute(target,'width',GetWidth(source));
+    }
+    
+  }
+  function removePositioning(target){
+    pos = ['top','left','bottom','right','z-index'];
+    for(var i = 0; i < pos.length; i++){
+      if(GetCSSAttribute(target,pos[i])){
+        SetCSSAttribute(target,pos[i],null);
+      }
+    }
+    SetCSSAttribute(target,'position','relative');
+  }
+  
+  function makePartial(myName,textStream){
+    textStream.fwConvertLineEndings = true;
+    textStream = fwEncode(textStream);
+    outFile = new FWFile;
+    if (outFile.fwOpenWrite('_' + myName + '.html',true,"TEXT","R*ch")){
+      fwParameters['partial'].fwClear();
+      outFile.fwSetEncoding('UTF-8');
+      outFile.fwWrite(textStream);
+      outFile.fwClose();
+      fwParameters['partial'].fwSpecify(outFile);
+      var partial = fwParameters['partial'].toString();
+      fwParameters['partial'].fwClear();
+      return partial.substring(1,partial.indexOf('.'));
+    }
+    fwParameters['partial'].fwClear();
+    return null;
+  }
+
+</action-javascript>
+</library-action>
+
+<item-action name="ScriptyFader">
+<action-appliesto non-html32/>
+<action-version version="0.6">
+ScriptyFader
+Action (c)2011, 2013 Walter Lee Davis.
+
+Apply the action to an HTML item to mark the location of a fading group of page elements.
+
+</action-version>
+<action-markup custom name="fader">var thumbs = $$('.SFthumb');
+  var mains = $$('.SFmain');
+  thumbs.each(function(elm){
+    if(elm.down('img')){
+      elm.down('img').setOpacity(__faded__);
+      elm.observe('mouseover', function(evt){
+        elm.down('img').morph('opacity:1',{duration:0.3});
+      });
+      elm.observe('mouseout', function(evt){
+        if(!elm.hasClassName('active')) elm.down('img').morph('opacity:__faded__',{duration:0.3});
+      });
+    }
+    elm.observe('click',function(evt){
+      evt.stop();
+      elm.addClassName('active');
+      if(elm.down('img')) elm.down('img').setStyle('opacity:1');
+      var main = $(elm.readAttribute('rel'))
+      if(main.pe) main.pe.stop();
+      if(history && history.pushState){
+        history.pushState(null,window.title,window.location.href.split(/#/).first() + '#' + elm.href.split(/#/).last());
+      }else{
+        window.location.hash = '#' + elm.href.split(/#/).last();
+      }
+      setSelection(elm);
+    });
+  });
+  mains.each(function(main){
+    main.update();
+    var clone = new Element('div',{'id':'clone_' + main.readAttribute('id')});
+    main.insert({after: clone});
+    clone.setStyle({top: main.getStyle('top'), left: main.getStyle('left'), width: main.getStyle('width'), height: main.getStyle('height'), position: 'absolute', zIndex:main.getStyle('z-index') -1}).hide();
+    if($$('a[rel~="' + main.id + '"]').length > 0){
+      main['initialSelection'] = $$('a[rel~="' + main.id + '"]').first();
+      main.initialSelection.addClassName('active')
+      main.initialSelection.down('img').setOpacity(0.9999997);
+    }else{
+      main['initialSelection'] = sFoptions.get(main.id.slice(0,-6)).first();
+    }
+    main['autofade'] = 0;
+    if(main.hasClassName('autofade')){
+      var classes = $w(main.readAttribute('class'));
+      main.autofade = parseFloat(classes.find(function(c){ return c.slice(0,5) == 'fade_'; }).slice(5).replace('-','.'));
+    }
+    if(window.location.hash && window.location.hash.length > 1 && thumbs.pluck('href').map(function(elm){ return '#' + elm.split('#').last()}).include(window.location.hash)){
+      main.initialSelection = thumbs.find(function(elm){ return '#' + elm.href.split('#').last() == window.location.hash; });
+      setSelection(main.initialSelection);
+    }else if(main.autofade > 0){
+      if(main.initialSelection.href){
+        new Ajax.Updater(main,'_' + main.initialSelection.href.split('#').last() + '.html',{method:'get'});
+      }else{
+        new Ajax.Updater(main,'_' + main.initialSelection + '.html',{method:'get'});
+      }
+      var idx = 0;
+      main['family'] = $$('a[rel~="' + main.id + '"]').each(function(elm){elm['idx'] = ++idx});
+      if(main.family.length < sFoptions.get(main.id.slice(0,-6)).length){
+        main['pe'] = new PeriodicalExecuter(function(){
+          var next;
+          var optionsArray = sFoptions.get(main.id.slice(0,-6));
+          if (next = optionsArray.find(function(elm){ return optionsArray.indexOf(elm) > optionsArray.indexOf(main.initialSelection); })){
+            main.initialSelection = next;
+          }else{
+            main.initialSelection = optionsArray.first();
+          }
+          loadOption(main.initialSelection,main.id);
+        },main.autofade);
+      }else{
+        main['pe'] = new PeriodicalExecuter(function(){
+          var next;
+          if (next = main.family.find(function(elm){ return elm.idx > main.initialSelection.idx; })){
+            main.initialSelection = next;
+          }else{
+            main.initialSelection = main.family.first();
+          }
+          setSelection(main.initialSelection);
+        },main.autofade);
+      }
+      main.observe('click', function(evt){ main.pe.stop(); });
+    }else{
+      new Ajax.Updater(main,'_' + main.readAttribute('id').gsub(/_fader$/,'') + '.html',{method:'get'});
+    }
+  });
+  function setSelection(elm){
+    var group = elm.readAttribute('rel');
+    var main = $(group);
+    var clone = $('clone_' + group);
+    $$('.' + group).reject(function(el){return el == elm;}).each(function(el){ el.removeClassName('active'); if(el.down('img')) el.down('img').morph('opacity:__faded__',{duration:0.3}); });
+    elm.addClassName('active');
+    elm.select('img').invoke('setStyle', {opacity:1});
+    loadOption(elm.href.split('#').last(),group);
+  }
+  function loadOption(choice,container){
+    var main = $(container).addClassName('loadingIndicator');
+    var clone = $('clone_' + container);
+    new Ajax.Updater(clone,'_' + choice + '.html' ,{
+      method:'get',
+      onComplete: function(){
+        Effect.Appear(clone, {queue: { position: 'start', scope: container, limit: 2 }});
+        Effect.Fade(main,{
+          queue: { position: 'start', scope: container, limit: 2 },
+          afterFinish: function(){
+            main.update(clone.innerHTML);
+            main.setOpacity(0.9999997).show().removeClassName('loadingIndicator');
+            clone.hide().update();
+          }
+        });
+      }
+    });
+  }
+  Event.observe(window,'popstate', function(evt){
+    if(thumbs.length > 0){
+      if(window.location.hash && window.location.hash.length > 1){
+        var initialSelection = thumbs.find(function(elm){ return '#' + elm.href.split('#').last() == window.location.hash; });
+      }else{
+        var initialSelection = thumbs.first().addClassName('active');
+        if(initialSelection.down('img')) initialSelection.down('img').setOpacity(0);
+      }
+      setSelection(initialSelection);
+    }
+  });
+</action-markup>
+<action-file name ="partial" var keepwithhtml/>
+<action-number name="autofade" title="Auto-Fade Interval" default=0 real-numbers />
+<action-checkbox name="spinner" title="Show Spinner" default=yes />
+<action-number name="faded" title="Faded Thumbnail Opacity" default=0.4 real-numbers>
+<action-file name="styleOverride" var />
+<action-file name="fader_file" var />
+<action-javascript>
+<action-include name="cdn_functions">
+<action-include name="classname_functions">
+<action-include name="style_accessors">
+<action-include name="scriptyHandlerFunctions">
+  
+  function fwAfterStartHead(){
+    addPrototype();
+    addScriptaculous('effects');
+  }
+  function fwBeforeEndHead(){
+    var myHead = fwDocument.fwTags.fwFind("head");
+    if (myHead && !fwPage.SFhead){
+      var myScript = myHead.fwAddJavaScript();
+      myScript.fwAddRawln("var sFoptions = $H();");
+      fwPage['SFhead'] = true;
+    }
+    myHead.fwAddRawln();
+  }
+  function fwAfterEndBody(){
+    var originalHeight, originalWidth
+    var thisItem = fwDocument.fwTags.fwFind(fwItem);
+    if (thisItem){
+      if(fwParameters['autofade'].fwValue > 0 && fwParameters['autofade'].fwValue < 1.1) alert('Autofade settings below 1.1 are not recommended.');
+      var spot = thisItem.fwAddEnclosing("div",true);
+      spot.id = fwQuote(thisItem.id.toString().slice(1,-1) + '_fader');
+      clonePosition(spot,thisItem);
+      SetCSSAttribute(spot,'border',null);
+      SetCSSAttribute(spot,'margin',null);
+      SetCSSAttribute(spot,'padding',null);
+      SetCSSAttribute(spot,'height',GetHeight(thisItem));
+      SetCSSAttribute(spot,'width',GetWidth(thisItem));
+      addClassName(spot,'SFmain');
+      if(fwParameters['autofade'].fwValue > 0){
+        addClassName(spot,'autofade');
+        addClassName(spot,'fade_' + fwParameters['autofade'].fwValue.toString().replace(/\./,'-'));
+      }
+      removePositioning(thisItem);
+      var code = thisItem.fwToHTML();
+      makePartial(thisItem.id.toString().slice(1,-1),code);
+      thisItem.fwDelete();
+      if(fwParameters.spinner.fwBoolValue){
+        findOrCreateStyleLink('fader', 'http://cdn.freewaypro.com/scripty_fader/0.6/fader.css');
+      }
+      if(!fwPage.SFspinner){
+        fwPage['SFspinner'] = true;
+        var theMarkup = fwMarkups['fader'];
+        var opacity = fwParameters.faded.fwValue;
+        if(opacity < 0) opacity = 0;
+        if(opacity > 1) opacity = 1;
+        theMarkup = theMarkup.toString().replace(/__faded__/g,opacity);
+        theMarkup.fwConvertLineEndings = true;
+
+        var path = createExternalScript('fader', 'fader_file', ['document.observe(\'dom:loaded\', function(evt){', theMarkup, '});']);
+        findOrCreateScriptLink('fader', path);
+
+      }
+    }
+  }
+  function fwAfterStartBody(){
+    var options = fwPage.fwFindAllActions(2,['ScriptyFader','ScriptyFader Option']);
+    if(options) {
+      var myHead = fwDocument.fwTags.fwFind("head");
+      if (myHead){
+        var myScript = myHead.fwAddJavaScript();
+        myScript.fwAddRaw("sFoptions.set('" + fwItem + "', [")
+        var filteredOptions = [];
+        filteredOptions.push( fwQuote(fwItem.toString()) );
+        for( i in options){
+          action = options[i];
+          if((action.fwParameters['targets'] && action.fwParameters.targets.fwValue == fwItem) && action.fwItem != fwItem){
+            filteredOptions.push( fwQuote(options[i].fwItem.toString()) );
+          }
+        }
+        myScript.fwAddRaw(filteredOptions.join(',') + ']);');
+        myScript.fwAddRawln('');
+      }
+    }
+  }
+  </action-javascript>
+</item-action>
+
+<item-action name="ScriptyFader Option">
+<action-appliesto layer non-html32/>
+<action-version version="0.6">
+ScriptyFader Option
+(c)2011 Walter Lee Davis
+
+Apply the action to any layer to designate a ScriptyFader option.
+
+</action-version>
+<action-file name ="partial" var keepwithhtml/>
+<action-itemref name="targets" title="Target" filter="activeTarget"/>
+<action-file name="styleOverride" var />
+<action-javascript>
+<action-include name="cdn_functions">
+<action-include name="classname_functions">
+<action-include name="style_accessors">
+<action-include name="scriptyHandlerFunctions">
+  
+  function activeTarget(item){
+    var options = fwPage.fwFindAllActions(2,'ScriptyFader');
+    if(options) {
+      for( i in options){
+        if(item == options[i].fwItem) return true;
+      }
+    }
+    return false;
+  }
+  function fwInterface(){
+    if(fwParameters['targets'].fwValue == null){
+      var options = fwPage.fwFindAllActions(2,'ScriptyFader');
+      if(options) {
+        for(i in options){
+          c = options[i].fwItem;
+          fwParameters['targets'].fwValue = c;
+        }
+      }
+    }
+  }
+  function fwBeforeEndBody(){
+    var thisItem = fwDocument.fwTags.fwFind("div", fwItem);
+    if (thisItem){
+      removePositioning(thisItem);
+      var code = thisItem.fwToHTML();
+      makePartial(thisItem.id.toString().slice(1,-1),code);
+      thisItem.fwDelete();
+    }
+  }
+
+</action-javascript>
+</item-action>
+
+<item-action name="ScriptyFader Thumbnail" generates-link>
+<action-appliesto graphic pass-through/>
+<action-version version="0.6">
+ScriptyFader Thumbnail
+(c)2011 Walter Lee Davis
+
+Apply the action to any graphic to create direct navigation to one of the ScriptyFader options.
+
+</action-version>
+<action-itemref name="base" title="Fader" filter="activeBase"/>
+<action-itemref name="targets" title="Option" filter="activeTarget"/>
+<action-file name="styleOverride" var />
+<action-javascript>
+<action-include name="cdn_functions">
+<action-include name="classname_functions">
+<action-include name="style_accessors">
+<action-include name="scriptyHandlerFunctions">
+  function activeBase(item){
+    var options = fwPage.fwFindAllActions(2,['ScriptyFader']);
+    if(options) {
+      for( i in options){
+        if(item == options[i].fwItem) return true;
+      }
+    }
+    return false;
+  }
+  function activeTarget(item){
+    var options = fwPage.fwFindAllActions(2,['ScriptyFader','ScriptyFader Option']);
+    if(options) {
+      for( i in options){
+        action = options[i];
+        if((action.fwParameters['targets'] && action.fwParameters.targets.fwValue == fwParameters.base.fwValue) || action.fwItem == fwParameters.base.fwValue){
+          if(item == action.fwItem) return true;
+        }else{
+          delete( options[i] );
+        }
+      }
+    }
+    return false;
+  }
+  function fwInterface(){
+    if(fwParameters['base'].fwValue == null){
+      var bases = fwPage.fwFindAllActions(2,['ScriptyFader']);
+      if(bases) {
+        for(i in bases){
+          b = bases[i].fwItem;
+          fwParameters['base'].fwValue = b;
+        }
+      }
+      var options = fwPage.fwFindAllActions(2,['ScriptyFader','ScriptyFader Option']);
+      if(options) {
+        for(i in options){
+          var action = options[i];
+          if((action.fwParameters['targets'] && action.fwParameters.targets.fwValue == fwParameters['base'].fwValue) || action.fwItem == fwParameters['base'].fwValue){
+            c = options[i].fwItem;
+            fwParameters['targets'].fwValue = c;
+          }
+        }
+      }
+    }
+  }
+  function fwAfterEndBody(){
+    var thisImg = fwDocument.fwTags.fwFind("img",fwItem);
+    if(thisImg){
+      var thisItem = thisImg.fwFindEnclosing("a");
+    }
+    if (!thisItem){
+      thisItem = fwDocument.fwTags.fwFind("img", fwItem);
+      thisItem = thisItem.fwAddEnclosing('a',true);
+    }
+    thisItem.href = fwQuote('#' + fwParameters['targets'].fwValue.toString());
+    thisItem.rel = fwQuote(fwParameters['base'].fwValue.toString() + '_fader');
+    addClassName(thisItem,'SFthumb')
+    addClassName(thisItem,fwParameters['base'].fwValue.toString() + '_fader')
+  }
+</action-javascript>
+</item-action>
+
+<action name="ScriptyFader Text Link" preview-text="&Text;" generates-link height=12>
+<action-version version="0.6">
+ScriptyFader Text Link
+(c)2011 Walter Lee Davis
+
+Insert the Action in a text container to create direct navigation to one of the ScriptyFader options.
+
+</action-version>
+<action-text name="Text" script default="link text"/>
+<action-itemref name="base" title="Fader" filter="activeBase"/>
+<action-itemref name="targets" title="Option" filter="activeTarget"/>
+<action-file name="styleOverride" var />
+<action-javascript>
+<action-include name="cdn_functions">
+<action-include name="classname_functions">
+<action-include name="style_accessors">
+<action-include name="scriptyHandlerFunctions">
+  function activeBase(item){
+    var options = fwPage.fwFindAllActions(2,['ScriptyFader']);
+    if(options) {
+      for( i in options){
+        if(item == options[i].fwItem) return true;
+      }
+    }
+    return false;
+  }
+  function activeTarget(item){
+    var options = fwPage.fwFindAllActions(2,['ScriptyFader','ScriptyFader Option']);
+    if(options) {
+      for( i in options){
+        action = options[i];
+        if((action.fwParameters['targets'] && action.fwParameters.targets.fwValue == fwParameters.base.fwValue) || action.fwItem == fwParameters.base.fwValue){
+          if(item == action.fwItem) return true;
+        }else{
+          delete( options[i] );
+        }
+      }
+    }
+    return false;
+  }
+  function fwInterface(){
+    if(fwParameters['base'].fwValue == null){
+      var bases = fwPage.fwFindAllActions(2,['ScriptyFader']);
+      if(bases) {
+        for(i in bases){
+          b = bases[i].fwItem;
+          fwParameters['base'].fwValue = b;
+        }
+      }
+      var options = fwPage.fwFindAllActions(2,['ScriptyFader','ScriptyFader Option']);
+      if(options) {
+        for(i in options){
+          var action = options[i];
+          if((action.fwParameters['targets'] && action.fwParameters.targets.fwValue == fwParameters['base'].fwValue) || action.fwItem == fwParameters['base'].fwValue){
+            c = options[i].fwItem;
+            fwParameters['targets'].fwValue = c;
+          }
+        }
+      }
+    }
+  }
+  function fwAfterEndBody(){
+    var enclosingTag = fwDocument.fwTags.fwFind("",fwItem);
+    if (enclosingTag){
+      var myLink = enclosingTag.fwFindEnclosing("a");
+      if (!myLink)
+        myLink = enclosingTag.fwFind("a", fwItem);
+      if (!myLink)
+      {
+        myLink = enclosingTag.fwAdd("a", true);
+        myLink.href = fwQuote('#' + fwParameters['targets'].fwValue.toString());
+      }
+      else
+        myLink.href = fwQuote('#' + fwParameters['targets'].fwValue.toString());
+      myLink.fwAddRaw(fwEncode(fwParameters.Text, fwPage));
+    }
+    myLink.href = fwQuote('#' + fwParameters['targets'].fwValue.toString());
+    myLink.rel = fwQuote(fwParameters['base'].fwValue.toString() + '_fader');
+    addClassName(myLink,'SFthumb')
+    addClassName(myLink,fwParameters['base'].fwValue.toString() + '_fader')
+  }
+</action-javascript>
+</action>

@@ -1,0 +1,236 @@
+<action! ================= Navigation Popup ===================/>
+<action name="Navigation Popup" title="Navigation Popup" requires-form preview-type=list>
+<action-version version="2.4.0">
+'Navigation Popup' Action
+Softpress Systems Limited 1999-2005
+</action-version>
+
+<action-popup name="Target" >
+<value name="Whole Window" >
+<value name="New Window" >
+<value name="Other" >
+</action-popup>
+<action-text name="CSS" title="CSS Style Name"/>
+<action-text name="OtherTarg" title="Other Target" />
+<action-popup name="default" title="Default Option">
+<value name="1">
+<value name="2">
+<value name="3">
+<value name="4">
+<value name="5">
+<value name="6">
+<value name="7">
+<value name="8">
+<value name="9">
+<value name="10">
+<value name="11">
+<value name="12">
+<value name="13">
+<value name="14">
+<value name="15">
+<value name="16">
+<value name="17">
+<value name="18">
+<value name="19">
+<value name="20">
+</action-popup>
+
+<action-popup name="Next Option">
+<value name="No Change" default>
+<value name="None" value="0">
+<value name="1">
+<value name="2">
+<value name="3">
+<value name="4">
+<value name="5">
+<value name="6">
+<value name="7">
+<value name="8">
+<value name="9">
+<value name="10">
+<value name="11">
+<value name="12">
+<value name="13">
+<value name="14">
+<value name="15">
+<value name="16">
+<value name="17">
+<value name="18">
+<value name="19">
+<value name="20">
+</action-popup>
+<action-text name="Option1" title="Option 1" />
+<action-url name="Url1" title="Url 1" />
+<action-text name="Option2" title="Option 2" />
+<action-url name="Url2" title="Url 2" />
+<action-text name="Option3" title="Option 3" />
+<action-url name="Url3" title="Url 3" />
+<action-text name="Option4" title="Option 4" />
+<action-url name="Url4" title="Url 4" />
+<action-text name="Option5" title="Option 5" />
+<action-url name="Url5" title="Url 5" />
+<action-text name="Option6" title="Option 6" />
+<action-url name="Url6" title="Url 6" />
+<action-text name="Option7" title="Option 7" />
+<action-url name="Url7" title="Url 7" />
+<action-text name="Option8" title="Option 8" />
+<action-url name="Url8" title="Url 8" />
+<action-text name="Option9" title="Option 9" />
+<action-url name="Url9" title="Url 9" />
+<action-text name="Option10" title="Option 10" />
+<action-url name="Url10" title="Url 10" />
+<action-text name="Option11" title="Option 11" />
+<action-url name="Url11" title="Url 11" />
+<action-text name="Option12" title="Option 12" />
+<action-url name="Url12" title="Url 12" />
+<action-text name="Option13" title="Option 13" />
+<action-url name="Url13" title="Url 13" />
+<action-text name="Option14" title="Option 14" />
+<action-url name="Url14" title="Url 14" />
+<action-text name="Option15" title="Option 15" />
+<action-url name="Url15" title="Url 15" />
+<action-text name="Option16" title="Option 16" />
+<action-url name="Url16" title="Url 16" />
+<action-text name="Option17" title="Option 17" />
+<action-url name="Url17" title="Url 17" />
+<action-text name="Option18" title="Option 18" />
+<action-url name="Url18" title="Url 18" />
+<action-text name="Option19" title="Option 19" />
+<action-url name="Url19" title="Url 19" />
+<action-text name="Option20" title="Option 20" />
+<action-url name="Url20" title="Url 20" />
+
+<action-markup custom name="FWLoadFromPopup">
+function FWLoadFromPopup(menu, win, next) {
+	var url = menu.options[menu.selectedIndex].value;
+	if (next != "None" && next != "No Change")
+		menu.selectedIndex = parseInt(next) - 1;
+	if (url != "" && url != "#")
+		win.location.href = url;
+}
+function FWfindAFrame(theName,theFrames,htmlLevel) {
+	if (theFrames != 0 && theFrames.length){
+		for (i = 0 ; i < theFrames.length ; i++)
+		{
+			var kXHTMLTransitionalLevel = 4;
+			var itsName = htmlLevel < kXHTMLTransitionalLevel ? theFrames[i].name : theFrames[i].frameElement.id;
+			if (itsName==theName)
+				return theFrames[i];
+			else { theFrame = FWfindAFrame(theName,theFrames[i].frames); if (theFrame) return theFrame; }
+		}
+	}
+	
+	return null;
+}
+function FWfindFrame(theName,theFrames,htmlLevel) {
+	theFrame = FWfindAFrame(theName,theFrames,htmlLevel);
+	if (theFrame)
+		return theFrame;
+	else
+		return window.top.open();
+}
+</action-markup>
+
+<action-javascript>
+
+	var kTotalItems = 20;
+
+	// This appends a piece of JavaScript stored in /action-markup/ to a specific tag
+	function AppendJavaScript(tag, markup, script)
+	{
+		// Append a piece of markup if it is not already defined
+		if (tag && !fwPage[markup])
+		{
+			var theMarkup = fwMarkups[markup];
+			var javascript = (script) ? tag.fwAddJavaScript('"'+script+'"') : tag.fwAddJavaScript();
+			
+			theMarkup.fwConvertLineEndings = true;
+			javascript.fwAddRawOpt(theMarkup);
+			fwPage[markup] = true;
+		}
+	}
+	
+
+	function addSelectTag(enclosingTag, name, size, onchange)
+	{
+		// this adds the <select> and </select>
+		var tag = enclosingTag.fwAdd("select");
+		var myStyle=fwParameters["CSS"];
+		if (myStyle != "" )
+		{
+			tag["class"] = '"'+myStyle+'"';
+		}
+		
+		tag.name = '"'+name+'"';
+		tag.size = '"'+size+'"';
+		tag.onchange = onchange;
+		tag.fwClose = true;
+		
+		return tag;
+	}
+	
+	function addOption(enclosingTag, value, option, selected)
+	{
+		// this adds the <option>
+		var tag = enclosingTag.fwAdd("option", true);
+		var myStyle=fwParameters["CSS"];
+		if (myStyle != "" )
+		{
+			tag["class"] = '"'+myStyle+'"';
+		}
+		tag.value = '"'+value+'"';
+		tag.fwAddRaw(fwEncode(option, fwPage));
+		if(undefined != selected){
+		  tag.selected = fwQuote('selected');
+		}
+		enclosingTag.fwAddRawOpt();
+		
+		return tag;
+	}
+	
+	function fwInterface()
+	{
+		fwParameters.OtherTarg.fwEnable = fwParameters.Target=="Other";
+	}
+	
+	function fwAfterEndHTML()
+	{
+		var enclosingTag = fwDocument.fwTags.fwFind("", fwItem);
+
+		if (enclosingTag)
+		{
+			var headTag = fwDocument.fwTags.fwFind("head");
+			AppendJavaScript(headTag,"FWLoadFromPopup");
+			
+			enclosingTag.fwAddRawOpt();
+			enclosingTag.fwIndent();
+			
+			if (fwParameters.Target == "Whole Window")
+				loadfrompopupstr = "window.top";
+			else if (fwParameters.Target == "New Window")
+				loadfrompopupstr = "window.top.open()";
+			else
+				loadfrompopupstr = "FWfindFrame('"+fwParameters.OtherTarg+"',window.top.frames,"+fwPage.fwHTMLLevel+")";
+			
+			tag = addSelectTag(enclosingTag, fwTitle, fwItem.fwSelect().fwSize, '"FWLoadFromPopup(this,'+loadfrompopupstr+',\''+fwParameters["Next Option"]+'\')"');
+			tag.fwAddRawOpt();
+			tag.fwIndent();
+			
+			for (var i = 1; i <= kTotalItems ; i++)
+			{
+				param = fwParameters["Option"+i].toString();
+				if (param)
+				{
+					url = fwParameters["Url"+i].toString();
+					var selected = ( !! i == fwParameters['default'].fwValue);
+					if (!url)
+						url ="#";
+					addOption(tag, url, param, selected);
+				}
+			}
+			tag.fwOutdent();
+			enclosingTag.fwOutdent();
+		}
+	}
+</action-javascript>
+</action>
