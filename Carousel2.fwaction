@@ -44,7 +44,7 @@ var findOrCreateScriptLink = function(name, path){
 var pageHasLinkToScript = function(name){
   var script = false;
   var scripts = fwDocument.fwTags.fwFindAll('script');
-  for(i in scripts){
+  for( var i in scripts){
     if(scripts[i].src && scripts[i].src.toString().match(new RegExp(name + '.js'))){
       script = scripts[i];
     }
@@ -55,7 +55,7 @@ var pageHasLinkToScript = function(name){
 var findOrCreateStyleLink = function(name, path){
   var head = fwDocument.fwTags.fwFind('head');
   var style, styles = head.fwFindAll('link', 'rel', 'stylesheet'), re = new RegExp('/' + name + '.css$');
-  for(i in styles){
+  for( var i in styles){
     if(styles[i].href && styles[i].href.toString().match(re)){
       style = styles[i];
     }
@@ -137,7 +137,7 @@ var removeClassName = function(element, className) {
 </action-javascript>
 </library-action>
 <item-action name="com.wdstudio.carousel2" title="Carousel 2">
-<action-version version="0.1.9">
+<action-version version="0.1.11">
 Carousel 2
 Copyright 2013 Walter Lee Davis
 
@@ -148,11 +148,11 @@ Create a carousel effect on your page.
 <value name="horizontal" title="Horizontal" default="yes" />
 <value name="vertical" title="Vertical" />
 </action-popup>
-<action-number name="duration" title="Effect duration" default="0.4" />
+<action-number name="duration" title="Effect duration" default="0.4" real-numbers />
 <action-label name="duration_explanation" title=" (seconds)" advance="no" />
 <action-checkbox name="infinite" title="Wrap around" default="no" />
 <action-checkbox name="autoglide" title="Play automatically" default="no" />
-<action-number name="interval" title="Interval" default="2" />
+<action-number name="interval" title="Interval" default="2" real-numbers />
 <action-label name="interval_explanation" title=" (seconds)" advance="no" />
 <action-checkbox name="borders" title="Move pane borders to outside" default="no" />
 
@@ -168,7 +168,7 @@ function fwParameterChanged(){
 function fwAfterEndHTML(){
   addPrototype();
   addScriptaculous('effects');
-  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.9/carousel2.js');
+  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.11/carousel2.js');
   var box = fwDocument.fwTags.fwFind('div', fwItem);
   if(box){
     addClassName(box, 'carousel_master')
@@ -182,7 +182,7 @@ function fwAfterEndHTML(){
 </action-javascript>
 </item-action>
 <item-action name="com.wdstudio.carousel2_pane" title="Carousel 2 Pane">
-<action-version version="0.1.9">
+<action-version version="0.1.11">
 Carousel 2 Pane
 Copyright 2013 Walter Lee Davis
 
@@ -197,7 +197,7 @@ Designate a pane to be added to a specific Carousel effect.
 function activeTarget(item){
 	var carousels = fwPage.fwFindAllActions(2,'com.wdstudio.carousel2');
 	if(carousels) {
-		for( i in carousels){
+		for( var i in carousels){
 			if(item == carousels[i].fwItem) return true;
 		}
 	}
@@ -207,7 +207,7 @@ function fwInterface(){
 	if(fwParameters['targets'].fwValue == null){
 		var carousels = fwPage.fwFindAllActions(2,'com.wdstudio.carousel2');
 		if(carousels) {
-			for(i in carousels){
+			for( var i in carousels){
 				c = carousels[i].fwItem;
 				fwParameters['targets'].fwValue = c;
 			}
@@ -220,7 +220,7 @@ function fwParameterChanged(){
 function fwAfterEndHTML(){
   addPrototype();
   addScriptaculous('effects');
-  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.9/carousel2.js');
+  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.11/carousel2.js');
   var box = fwDocument.fwTags.fwFind('div', fwItem);
   if(box){
     addClassName(box, 'carousel_pane')
@@ -232,7 +232,7 @@ function fwAfterEndHTML(){
 </item-action>
 <item-action name="com.wdstudio.carousel2_button" title="Carousel 2 Button" generates-link>
 <action-appliesto graphic pass-through/>
-<action-version version="0.1.9">
+<action-version version="0.1.11">
 Carousel 2 Button
 Copyright 2013 Walter Lee Davis
 
@@ -251,7 +251,7 @@ Create a navigation button to move a carousel one way or the other.
 function activeTarget(item){
   var carousels = fwPage.fwFindAllActions(2,'com.wdstudio.carousel2');
   if(carousels) {
-    for( i in carousels){
+    for( var i in carousels){
       if(item == carousels[i].fwItem) return true;
     }
   }
@@ -261,7 +261,7 @@ function fwInterface(){
   if(fwParameters['targets'].fwValue == null){
     var carousels = fwPage.fwFindAllActions(2,'com.wdstudio.carousel2');
     if(carousels) {
-      for(i in carousels){
+      for( var i in carousels){
         c = carousels[i].fwItem;
         fwParameters['targets'].fwValue = c;
       }
@@ -274,7 +274,7 @@ function fwParameterChanged(){
 function fwAfterEndHTML(){
   addPrototype();
   addScriptaculous('effects');
-  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.9/carousel2.js');
+  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.11/carousel2.js');
   var box = fwDocument.fwTags.fwFind('img', fwItem);
   if(box){
     var link = box.fwFindEnclosing('a');
@@ -289,7 +289,7 @@ function fwAfterEndHTML(){
 </item-action>
 <item-action name="com.wdstudio.carousel2_tab" title="Carousel 2 Tab" generates-link>
 <action-appliesto graphic pass-through/>
-<action-version version="0.1.9">
+<action-version version="0.1.11">
 Carousel 2 Tab
 Copyright 2013 Walter Lee Davis
 
@@ -304,7 +304,7 @@ Create a navigation button to move a carousel to show a particular pane.
 function activeTarget(item){
   var carousels = fwPage.fwFindAllActions(2,['com.wdstudio.carousel2', 'com.wdstudio.carousel2_pane']);
   if(carousels) {
-    for( i in carousels){
+    for( var i in carousels){
       if(item == carousels[i].fwItem) return true;
     }
   }
@@ -314,7 +314,7 @@ function fwInterface(){
   if(fwParameters['targets'].fwValue == null){
     var carousels = fwPage.fwFindAllActions(2,['com.wdstudio.carousel2', 'com.wdstudio.carousel2_pane']);
     if(carousels) {
-      for(i in carousels){
+      for( var i in carousels){
         c = carousels[i].fwItem;
         fwParameters['targets'].fwValue = c;
       }
@@ -327,7 +327,7 @@ function fwParameterChanged(){
 function fwAfterEndHTML(){
   addPrototype();
   addScriptaculous('effects');
-  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.9/carousel2.js');
+  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.11/carousel2.js');
   var box = fwDocument.fwTags.fwFind('img',fwItem);
   if(box){
     var link = box.fwFindEnclosing('a');
@@ -339,7 +339,7 @@ function fwAfterEndHTML(){
 </action-javascript>
 </item-action>
 <action name="com.wdstudio.carousel2_text_button" title="Carousel 2 Text Button" preview-text="&link_text;" generates-link height=12 width=100>
-<action-version version="0.1.9">
+<action-version version="0.1.11">
 Carousel 2 Text Button
 Copyright 2013 Walter Lee Davis
 
@@ -359,7 +359,7 @@ Create a text navigation link to move a carousel one way or the other.
 function activeTarget(item){
   var carousels = fwPage.fwFindAllActions(2,'com.wdstudio.carousel2');
   if(carousels) {
-    for( i in carousels){
+    for( var i in carousels){
       if(item == carousels[i].fwItem) return true;
     }
   }
@@ -369,7 +369,7 @@ function fwInterface(){
   if(fwParameters['targets'].fwValue == null){
     var carousels = fwPage.fwFindAllActions(2,'com.wdstudio.carousel2');
     if(carousels) {
-      for(i in carousels){
+      for( var i in carousels){
         c = carousels[i].fwItem;
         fwParameters['targets'].fwValue = c;
       }
@@ -382,7 +382,7 @@ function fwParameterChanged(){
 function fwAfterEndHTML(){
   addPrototype();
   addScriptaculous('effects');
-  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.9/carousel2.js');
+  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.11/carousel2.js');
   var enclosingTag = fwDocument.fwTags.fwFind("",fwItem);
   if (enclosingTag){
     var link = enclosingTag.fwFindEnclosing("a");
@@ -400,7 +400,7 @@ function fwAfterEndHTML(){
 </action-javascript>
 </action>
 <action name="com.wdstudio.carousel2_text_tab" title="Carousel 2 Text Tab" preview-text="&link_text;" generates-link height=12 width=100>
-<action-version version="0.1.9">
+<action-version version="0.1.11">
 Carousel 2 Text Tab
 Copyright 2013 Walter Lee Davis
 
@@ -415,7 +415,7 @@ Create a text link navigation to move a carousel to show a particular pane.
 function activeTarget(item){
   var carousels = fwPage.fwFindAllActions(2,['com.wdstudio.carousel2', 'com.wdstudio.carousel2_pane']);
   if(carousels) {
-    for( i in carousels){
+    for( var i in carousels){
       if(item == carousels[i].fwItem) return true;
     }
   }
@@ -425,7 +425,7 @@ function fwInterface(){
   if(fwParameters['targets'].fwValue == null){
     var carousels = fwPage.fwFindAllActions(2,['com.wdstudio.carousel2', 'com.wdstudio.carousel2_pane']);
     if(carousels) {
-      for(i in carousels){
+      for( var i in carousels){
         c = carousels[i].fwItem;
         fwParameters['targets'].fwValue = c;
       }
@@ -438,7 +438,7 @@ function fwParameterChanged(){
 function fwAfterEndHTML(){
   addPrototype();
   addScriptaculous('effects');
-  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.9/carousel2.js');
+  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.11/carousel2.js');
   var enclosingTag = fwDocument.fwTags.fwFind("",fwItem);
   if (enclosingTag){
     var link = enclosingTag.fwFindEnclosing("a");

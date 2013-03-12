@@ -1,5 +1,5 @@
 document.observe('dom:loaded', function(){
-  var carousel2version = '0.1.9';
+  var carousel2version = '0.1.11';
   var links = $$('a[href*="#"]').select(function(elm){
     var target = $(elm.href.split('#').last());
     if(target && (target.hasClassName('carousel_master') || target.hasClassName('carousel_pane'))){
@@ -31,6 +31,17 @@ document.observe('dom:loaded', function(){
     });
   };
   Element.addMethods({
+    cloneBorder: function(elm, original){
+      var elm = $(elm), original = $(original);
+      $w('top right bottom left').each(function(side){
+        $w('color width style').each(function(mode){
+          var key = 'border-' + side + '-' + mode
+          var val = original.getStyle(key);
+          elm.setStyle(key + ':' + val);
+        });
+      });
+      return elm;
+    },
     cloneStyle: function(element, source){
       var element = $(element), source = $(source);
       if(document.defaultView){
@@ -55,14 +66,17 @@ document.observe('dom:loaded', function(){
     slider['moving'] = false;
     slider['links'] = [];
     var borderStyle = (tweakBorders) ? elm.getStyle('border') : 'none';
-    if(tweakBorders) elm.setStyle('border: none');
+    if(tweakBorders){
+      wrap.cloneBorder(elm);
+      elm.setStyle('border: none');
+    }
     var positioned = (elm.up('div').id == 'PageDiv' && (elm.getStyle('top') || elm.getStyle('left') || elm.getStyle('bottom') || elm.getStyle('right'))) ? true : false;
     if(positioned){
       wrap.clonePosition(elm, {offsetLeft: - $('PageDiv').cumulativeOffset()['left']});
     }else{
       wrap.clonePosition(elm, {setLeft: false, setTop: false});
     }
-    wrap.setStyle('float: ' + elm.getStyle('float') + '; clear: ' + elm.getStyle('clear') + '; z-index: ' + elm.getStyle('z-index') + '; right: ' +  elm.getStyle('right') + '; top: ' + elm.getStyle('top') + '; left: ' + elm.getStyle('left') + '; bottom: ' + elm.getStyle('bottom') + '; position: ' + elm.getStyle('position') + '; margin: ' + elm.getStyle('margin') + '; overflow: hidden; border: ' +  borderStyle);
+    wrap.setStyle('float: ' + elm.getStyle('float') + '; clear: ' + elm.getStyle('clear') + '; z-index: ' + elm.getStyle('z-index') + '; right: ' +  elm.getStyle('right') + '; top: ' + elm.getStyle('top') + '; left: ' + elm.getStyle('left') + '; bottom: ' + elm.getStyle('bottom') + '; position: ' + elm.getStyle('position') + '; margin: ' + elm.getStyle('margin') + '; overflow: hidden;');
     wrap.insert(slider);
     slider.setStyle({position: 'absolute', overflow: 'hidden', top: 0, left: 0, width: wrap.getWidth() + 'px', height: wrap.getHeight() + 'px'});
     var d = 0;
