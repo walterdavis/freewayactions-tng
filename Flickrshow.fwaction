@@ -1,28 +1,12 @@
 <action-encoding>UTF-8</action-encoding>
 <library-action name="style_accessors">
-<action-version version="1.2.1">
+<action-version version="1.2.3">
 Style Accessors
 
 Get and set styles on any element, regardless where they were initially defined.
 
-The MIT License (MIT)
+MIT License
 Copyright (c) 2013 Walter Lee Davis
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this
-software and associated documentation files (the "Software"), to deal in the Software
-without restriction, including without limitation the rights to use, copy, modify, merge,
-publish, distribute, sublicense, and/or sell copies of the Software, and to permit
-persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or
-substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
 </action-version>
 <action-javascript>
 /**
@@ -32,7 +16,7 @@ DEALINGS IN THE SOFTWARE.
 if(undefined == FWPage.hasRootResourcesFolder){
   FWPage.prototype.hasRootResourcesFolder = function(){
     var head = fwDocument.fwTags.fwFind('head');
-    if(!head) fwAbort('Please call headLinks from fwBeforeEndHead or later.');
+    if(!head) fwAbort('Please call hasRootResourcesFolder from fwBeforeEndHead or later.');
     var links = head.fwFindAll('link', 'href');
     for(var i in links){
       if(links[i].href){
@@ -53,7 +37,7 @@ if(undefined == FWPage.hasRootResourcesFolder){
 if(undefined == FWPage.hasNoResourcesFolder){
   FWPage.prototype.hasNoResourcesFolder = function(){
     return (! fwClearGif.toString().match('Resources/'))
-  }
+  };
 }
 /**
 * Find the folder where the style should be saved
@@ -142,8 +126,8 @@ if(undefined == FWPage.resetOverride){
     myFile.fwWrite('');
     myFile.fwClose();
     return myFile;
-  }
-};
+  };
+}
 /**
 * Convert a string of CSS into a hash.
 * @return object JSON of styles
@@ -151,13 +135,13 @@ if(undefined == FWPage.resetOverride){
 if(undefined == cssToHash){
   var cssToHash = function(string){
     var out = {}, string = string.toString().replace(/^"\s*(.+?)\s*"$/, '$1');
-  var pairs = string.split(/\s*;\s*/);
-  for (var i in pairs){
-  var pair = pairs[i].split(/\s*:\s*/);
-  out[pair[0]] = pair[1];
-};
-return out;
-};
+    var pairs = string.split(/\s*;\s*/);
+    for (var i in pairs){
+      var pair = pairs[i].split(/\s*:\s*/);
+      out[pair[0]] = pair[1];
+    };
+    return out;
+  };
 }
 /**
 * Convert a JSON object of style definitions into CSS.
@@ -174,6 +158,16 @@ if(undefined == hashToCSS){
   };
 }
 /**
+* Get the CSS selector for a single tag.
+* @return string
+*/
+if(undefined == FWTag.getSelector){
+  FWTag.prototype.getSelector = function(){
+    var id = '#' + this.id.toString().slice(1,-1);
+    return id + ', ' + id + '.f-ms';
+  };
+}
+/**
 * Write CSS into the override sheet.
 * @return void
 */
@@ -186,7 +180,7 @@ if(undefined == FWTag.setOverride){
     myFile.fwClose();
     var overwrite = false;
     if(existing && existing.match(this.id.toString().slice(1,-1))){
-      var re = new RegExp('#' + this.id.toString().slice(1,-1) + ' \\{ (.+?) \\}');
+      var re = new RegExp(this.getSelector() + ' \\{ (.+?) \\}');
       existing = existing.replace(re, content);
       content = existing;
       overwrite = true;
@@ -198,8 +192,8 @@ if(undefined == FWTag.setOverride){
     myFile.fwWrite(content);
     myFile.fwClose();
     this.style = null;
-  }
-};
+  };
+}
 /**
 * Read the content of the entire override sheet.
 * @return object JSON of styles
@@ -210,12 +204,12 @@ if(undefined == FWTag.getOverride){
     myFile.fwOpenRead(fwPage.styleOverridePath(), false);
     var content = myFile.fwReadString(myFile.fwAvailable);
     myFile.fwClose();
-    var re = new RegExp('#' + this.id.toString().slice(1,-1) + ' \\{ (.+?) \\}');
+    var re = new RegExp(this.getSelector() + ' \\{ (.+?) \\}');
     if( null != content.match(re) && content.match(re).length > 0 )
     return( cssToHash(content.match(re)[1]) );
     return {};
-  }
-};
+  };
+}
 /**
 * Get one CSS attribute of a single tag.
 * attributeName is an attribute (width, padding...) returns value (if set) or null.
@@ -235,11 +229,11 @@ if(undefined == FWTag.getStyle){
 if(undefined == FWTag.getStyleAsRule){
   FWTag.prototype.getStyleAsRule = function(){
     if(this.style){
-      return '#' + this.id.toString().slice(1,-1) + ' { ' + this.style.toString().slice(1,-1) + ' }';
+      return this.getSelector() + ' { ' + this.style.toString().slice(1,-1) + ' }';
     }else{
       return false;
     }
-  }
+  };
 }
 /**
 * Get all CSS attributes of a single tag, regardless where they were set.
@@ -343,7 +337,7 @@ if(undefined == FWTag.setStyle){
 </library-action>
 <item-action name="com.wdstudio.flickrshow" title="FlickrShow">
 <action-appliesto html />
-<action-version version="0.2">
+<action-version version="0.2.1">
 FlickrShow Action
 Copyright 2012 - 2013 Walter Lee Davis
 
