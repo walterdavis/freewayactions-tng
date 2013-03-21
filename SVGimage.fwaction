@@ -1,0 +1,27 @@
+<item-action name="com.wdstudio.svg_image" title="SVGimage">
+<action-appliesto svg-import />
+<action-version version="0.1">
+SVGimage Action
+Copyright 2013 Walter Lee Davis
+
+Create an object tag for an SVG image.
+</action-version>
+<action-file name="original" var />
+<action-javascript>
+function fwBeforeEndBody(){
+  var elm = fwDocument.fwTags.fwFind('img', fwItem);
+  if(!!elm && fwItem.fwContentFile){
+    var myFile = new FWFile();
+    myFile.fwOpenRead(fwItem.fwContentFile);
+    myFile.fwClose();
+    fwParameters['original'].fwSpecify(myFile);
+    var filePath = fwParameters['original'].toString();
+    fwParameters['original'].fwClear();
+    var obj = elm.fwAddEnclosing('object', true);
+    obj.fwAddRaw();
+    obj.type = fwQuote('image/svg+xml');
+    obj.data = fwQuote(filePath);
+  }
+}
+</action-javascript>
+</item-action>
