@@ -1,0 +1,21 @@
+<action-encoding>UTF-8</action-encoding>
+<page-action name="com.walterdavisstudio.go_daddy_helper" title="GoDaddyHelper">
+<action-version version="0.1">
+	Copyright Walter Davis Studio 2013
+</action-version>
+<action-checkbox name="apply" title="Apply" default="yes"/>
+<action-javascript>
+function fwAfterEndHTML(){
+  var head = fwDocument.fwTags.fwFind('head');
+  if(head && fwParameters['apply'].fwBoolValue){
+    var wrap = head.fwAddEnclosing('head', true);
+    var content = head.fwFindAllContent();
+    for(var i in content){
+      var c = content[i];
+      wrap.fwAddRaw(c.fwToHTML().replace('<!--#', '<!-- #'));
+    }
+    head.fwDelete();
+  }
+}
+</action-javascript>
+</page-action>
