@@ -1,13 +1,233 @@
+<action-encoding>UTF-8</action-encoding>
+<library-action name="functions">
+<action-javascript>
+/**
+ * Write a script to an external file.
+ * name: common name of script (domloaded, windowload, custom)
+ * fileParameter: the action-file that holds this file
+ * content: string or array of strings containing the content
+ * returns URL to generated file, for linking purposes
+ */
+var createExternalScript = function(name, fileParameter, content){
+  if(!content.join){
+    content = [content];
+  }
+  var myFile = new FWFile();
+  if(fwParameters[fileParameter].fwHasFile){
+    myFile.fwOpenWrite(fwParameters[fileParameter].fwValue, true, 'TEXT');
+    myFile.fwSetEncoding('UTF-8');
+  }else{
+    var path = fwPage.fwHttpPath();
+    path = path.replace(/\//g, '_').split('.');
+    var filename = path.pop();
+    path = path.join('.') + '_' + name + '.js';
+    myFile.fwOpenWrite(path, true, 'TEXT');
+    myFile.fwSetEncoding('UTF-8');
+  }
+  for (var i=0; i < content.length; i++) {
+    myFile.fwWrite(content[i] + "\n");
+  };
+  myFile.fwClose();
+  fwParameters[fileParameter].fwSpecify(myFile);
+  var filePath = fwParameters[fileParameter].toString();
+  fwParameters[fileParameter].fwClear();
+  return filePath;
+}
+
+/**
+  * Create a CDN link to a JavaScript library. 
+  * name: common filename for the library (prototype, scriptaculous, jquery)
+  * path: (optional) fully-qualified URL to the CDN-hosted file
+  * (path is not needed if you are linking to prototype or scriptaculous)
+  * WARNING! changes any existing link in the page to the library to the 
+  * one specified in path or defaults
+  * returns reference to the script
+  */
+var findOrCreateScriptLink = function(name, path){
+  var head = fwDocument.fwTags.fwFind('head');
+  var script = pageHasLinkToScript(name), load = '';
+  var libs = {
+    'prototype': 'http://ajax.googleapis.com/ajax/libs/prototype/1.7/prototype.js',
+    'scriptaculous': 'http://ajax.googleapis.com/ajax/libs/scriptaculous/1.9/scriptaculous.js'
+  };
+  if(!libs[name]){
+    if(!!path){
+      libs[name] = path;
+    }else{
+      fwAbort('Please provide a URL for “' + name + '”. Publishing cannot continue.');
+    }
+  }
+  if(!script){
+    script = head.fwAdd('script', true);
+    script.fwAddRawOpt('');
+    head.fwAddRawOpt('');
+  }
+  //catch any load variables from scriptaculous
+  if(name == 'scriptaculous' && script.src && script.src.toString().match(/\?load=/)){
+    load = script.src.toString().match(/(\?load=.+?)"/)[1]; //"
+  }
+  //overwrite the path to the script to make it current
+  script.src = fwQuote(libs[name] + load);
+  script.type = fwQuote('text/javascript');
+  script.charset = fwQuote('utf-8');
+  return script;
+}
+
+var pageHasLinkToScript = function(name){
+  var scripts = fwDocument.fwTags.fwFindAll('script');
+  for(i in scripts){
+    if(scripts[i].src && scripts[i].src.toString().match(new RegExp(name + '.js'))){
+      return scripts[i];
+    }
+  }
+  return false;
+}
+/**
+ * Find a script tag on the page by its ID, or create one if missing.
+ * name: ID of the script
+ * returns script reference
+ */
+var findOrCreateScript = function(name){
+  var head = fwDocument.fwTags.fwFind('head');
+  var script = pageHasNamedScript(name);
+  if(!script){
+    script = head.fwAdd('script', true);
+    script.id = fwQuote(name);
+    script.type = fwQuote('text/javascript');
+    if(fwMarkups[name]) script.fwAddRawln(fwMarkups[name]);
+    head.fwAddRawOpt('');
+  }
+  return script;
+}
+
+var pageHasNamedScript = function(name){
+  var scripts = fwDocument.fwTags.fwFindAll('script');
+  for(i in scripts){
+    if(scripts[i].id && scripts[i].id.toString().match(new RegExp(name))){
+      return scripts[i];
+    }
+  }
+  return false;
+}
+
+/**
+ * Append code to a given script tag.
+ * elm: reference to script tag
+ * content: string or array of strings
+ * If the script tag includes an anonymous function, content is added
+ * _inside_ that function. Otherwise it is added after any other content.
+ * returns reference to script tag
+ */
+var addToScript = function(elm, content){
+  var txt = elm.fwToHTML().toString();
+  var closer = false;
+  if(txt.match(/\}\);[\r\n]+<\/script>/)){
+    txt = txt.split(/[\r\n]+/);
+    txt.shift();
+    txt.pop();
+    txt.pop();
+    closer = true;
+  }else if(txt.match(/<\/script>/)){
+    txt = txt.split(/[\r\n]+/);
+    txt.shift();
+    txt.pop();
+  }
+  if(!content.join){
+    content = content.split(/[\r\n]+/);
+  }
+  var contents = elm.fwFindAllContent();
+  for(i in contents){
+    contents[i].fwDelete();
+  }
+  elm.fwAddRawln();
+  if(txt.length){
+    for(i in txt){
+      elm.fwAddRawln(txt[i]);
+    }
+  }
+  if(content.length){
+    elm.fwIndent();
+    for(i in content){
+      elm.fwAddRawln(content[i]);
+    }
+    elm.fwOutdent();
+  }
+  if(closer) elm.fwAddRawln("});");
+  return elm;
+}
+/**
+ * Wrapper to simplify function call
+ * returns nothing
+ */
+var addPrototype = function(){
+  findOrCreateScriptLink('prototype');
+}
+
+/**
+ * Add scriptaculous to the page, and load any modules needed if fewer than all.
+ * modules: comma-separated string or array of scriptaculous modules
+ * returns nothing
+ */
+
+var addScriptaculous = function(modules){
+  var scriptaculousLibs = ["builder", "effects", "dragdrop", "controls", "slider", "sound"];
+  var load = [];
+  if(modules.join){
+    modules = modules.join();
+  }
+  var script = findOrCreateScriptLink('scriptaculous');
+  if(script.src.toString().match(/\?load=/)){
+    modules += script.src.toString().split(/\?load=/)[1];
+  }
+  for (var i=0; i < scriptaculousLibs.length; i++) {
+    var re = new RegExp(scriptaculousLibs[i]);
+    if(modules.match(re))
+    load.push(scriptaculousLibs[i]);
+  };
+  if(load.length > 0 && load.length < 6){
+    load = '?load=' + load.join(',');
+    script.src = script.src.toString().replace(/\?load=[^"]+/, '').replace(/"$/, load + '"'); //"
+  }
+}
+function posixToMac(path){
+  return path.replace(/\//g, ':');
+}
+function rootRelativePath(){
+  var posixPath = fwPage.fwHttpPath(null, true);
+  return posixToMac(posixPath);
+}
+
+/**
+ * Edit text stored in a fwParameter
+ * Adapted from Source Code Snooper by Tim Plumb
+ * codeName: name of the fwParameter
+ * returns nothing
+ */
+function EditCode(codeName){
+  var mycustomcode = fwParameters[codeName].toString();
+  var myprompt = "Add your code here";
+  var mycustomcodeprompt = fwBigPrompt(myprompt, mycustomcode);
+  if (mycustomcodeprompt != null) {
+    if (mycustomcodeprompt != mycustomcode) {
+      fwParameters[codeName].fwValue = mycustomcodeprompt;
+    }
+  }
+}
+
+</action-javascript>
+</library-action>
 <item-action name="com.wdstudio.svg_image" title="SVGimage">
 <action-appliesto svg-import />
-<action-version version="0.1">
+<action-version version="0.2">
 SVGimage Action
 Copyright 2013 Walter Lee Davis
 
 Create an object tag for an SVG image.
 </action-version>
 <action-file name="original" var />
+<action-checkbox name="ie" title="Support IE 8" />
 <action-javascript>
+<action-include name="functions">
 function fwBeforeEndBody(){
   var elm = fwDocument.fwTags.fwFind('img', fwItem);
   if(!!elm && fwItem.fwContentFile){
@@ -17,10 +237,16 @@ function fwBeforeEndBody(){
     fwParameters['original'].fwSpecify(myFile);
     var filePath = fwParameters['original'].toString();
     fwParameters['original'].fwClear();
-    var obj = elm.fwAddEnclosing('object', true);
-    obj.fwAddRaw();
-    obj.type = fwQuote('image/svg+xml');
-    obj.data = fwQuote(filePath);
+    if(!fwParameters['ie'].fwBoolValue){
+      var obj = elm.fwAddEnclosing('object', true);
+      obj.fwAddRaw();
+      obj.type = fwQuote('image/svg+xml');
+      obj.data = fwQuote(filePath);
+    }else{
+      elm['data-svg'] = fwQuote(filePath);
+      addPrototype();
+      findOrCreateScriptLink('svg-shim', 'http://cdn.freewaypro.com/svg-shim/0.1/svg-shim.js');
+    }
   }
 }
 </action-javascript>
