@@ -1,0 +1,22 @@
+<action-encoding>UTF-8</action-encoding>
+<page-action name="com.wdstudio.gretel" title="Gretel">
+<action-version version="0.1">
+Gretel
+Copyright 2013 Walter Lee Davis
+
+Add trailing comments to each block-level tag.
+</action-version>
+<action-javascript>
+function fwAfterEndBody(){
+  var tags = fwDocument.fwTags.fwFindAll(['div','article','section','aside','header','footer', 'nav', 'address']);
+  for (var i = tags.length - 1; i >= 0; i--){
+    var tag = tags[i];
+    if(tag.id){
+      var id = tag.id.toString().slice(1,-1);
+      var dummy = tag.fwAddEnclosing('');
+      dummy.fwAddRaw('<!-- end ' + id + ' -->');
+    }
+  };
+}
+</action-javascript>
+</page-action>
