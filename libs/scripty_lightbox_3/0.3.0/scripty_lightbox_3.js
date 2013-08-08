@@ -1,6 +1,6 @@
 document.observe('dom:loaded', function(){
   //read the dimensions out of the filename string
-  var version = '0.2.9';
+  var version = '0.3.0';
   function read_geometry(str){
     var out = {'width':640,'height':480};
     if(str.length > 3 && str.include('x')){
@@ -91,7 +91,7 @@ document.observe('dom:loaded', function(){
       var extension = (filename.match(/\./)) ? filename.substr(filename.lastIndexOf('.') + 1).split(/[\?#]/)[0].toLowerCase() : false;
       if(geometry && (!extension || ! $w('mov m4v mp4 swf jpg jpeg png gif').include(extension))){
         player.setStyle('width:' + (geometry.width) + 'px; height:' + (geometry.height + 16) + 'px;');
-        var iframe = new Template('<iframe width="#{width}" height="#{height}" border="0" src="#{src}"></iframe>');
+        var iframe = new Template('<div style="overflow:auto;-webkit-overflow-scrolling:touch"><iframe width="100%" height="100%" border="0" src="#{src}"></iframe></div>');
         vars = {'height':(geometry.height), 'width':geometry.width, 'src':elm.href};
         player.update(iframe.evaluate(vars));
         window.setTimeout(center_player,1);
