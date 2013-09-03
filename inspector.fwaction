@@ -1,0 +1,7 @@
+<page-action name="inspector">
+<action-javascript>
+function fwBeforeEndBody(){
+alert(fwPage.fwHTMLLevel);
+}
+</action-javascript>
+</page-action>

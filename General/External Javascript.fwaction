@@ -1,0 +1,119 @@
+<action-encoding>UTF-8</action-encoding>
+<page-action name="External JavaScript">
+<action-version version="1.2">
+“External JavaScript” Action
+Softpress Systems Limited 2008
+</action-version>
+<action-file name="File1" title="File 1">
+ <value type=".js">
+ <value type=".txt">
+</action-file>
+<action-text name="Language1" title="Language" default="JavaScript">
+<action-popup name="Where1" title="Where">
+ <value name="before /HEAD">
+ <value name="after BODY">
+ <value name="Before /BODY">
+</action-popup>
+<action-label name="l1" title="-">
+<action-file name="File2" title="File 2">
+ <value type=".js">
+ <value type=".txt">
+</action-file>
+<action-text name="Language2" title="Language" default="JavaScript">
+<action-popup name="Where2" title="Where">
+ <value name="before /HEAD">
+ <value name="after BODY">
+ <value name="Before /BODY">
+</action-popup>
+<action-label name="l2" title="-">
+<action-file name="File3" title="File 3">
+ <value type=".js">
+ <value type=".txt">
+</action-file>
+<action-text name="Language3" title="Language" default="JavaScript">
+<action-popup name="Where3" title="Where">
+ <value name="before /HEAD">
+ <value name="after BODY">
+ <value name="Before /BODY">
+</action-popup>
+<action-label name="l3" title="-">
+<action-file name="File4" title="File 4">
+ <value type=".js">
+ <value type=".txt">
+</action-file>
+<action-text name="Language4" title="Language" default="JavaScript">
+<action-popup name="Where4" title="Where">
+ <value name="before /HEAD">
+ <value name="after BODY">
+ <value name="Before /BODY">
+</action-popup>
+<action-label name="l4" title="-">
+<action-file name="File5" title="File 5">
+ <value type=".js">
+ <value type=".txt">
+</action-file>
+<action-text name="Language5" title="Language" default="JavaScript">
+<action-popup name="Where5" title="Where">
+ <value name="before /HEAD">
+ <value name="after BODY">
+ <value name="Before /BODY">
+</action-popup>
+<action-javascript>
+
+	var kMaxFiles=5;
+	
+	function EnableFile(num)
+	{
+		var hasFile = fwParameters["File"+num].fwHasFile;
+		fwParameters["Language"+num].fwVisible=hasFile;
+		fwParameters["Where"+num].fwVisible=hasFile;
+	}
+	
+	function fwInterface()
+	{
+		for (var i = 1; i <= 5; i++)
+			EnableFile(i);
+	}
+	
+	function AddFile(theTag, file, language)
+	{
+		var scriptTag = theTag.fwAdd("script", true);
+		scriptTag.src='"'+file+'"';
+		if (language!="" && fwPage.fwHTMLLevel<5)
+			scriptTag.language=fwQuote(language);
+		
+		scriptTag.type=fwQuote("text/javascript");
+	}
+	
+	function AddFiles(theTag, whereStr)
+	{
+		if (theTag == null)
+			return;
+			
+		for (var i = 1; i <= 5; i++)
+		{
+			var file = fwParameters["File"+i];
+			var language = fwParameters["Language"+i];
+			var where = fwParameters["Where"+i];
+			if (file.fwHasFile && where == whereStr)
+				AddFile(theTag, file, language);
+		}
+	}
+	
+	function fwBeforeEndHead()
+	{
+		AddFiles(fwDocument.fwTags.fwFind("head"), "before /HEAD");
+	}
+	
+	function fwAfterStartBody()
+	{
+		AddFiles(fwDocument.fwTags.fwFind("body"), "after BODY");
+	}
+	
+	function fwAfterEndBody()
+	{
+		AddFiles(fwDocument.fwTags.fwFind("body"), "Before /BODY");
+	}
+	
+</action-javascript>
+</page-action>

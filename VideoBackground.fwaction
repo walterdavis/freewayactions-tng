@@ -1,0 +1,135 @@
+<action-encoding>UTF-8</action-encoding>
+<item-action name="com.wdstudio.video_background" title="VideoBackground">
+<action-appliesto non-html32 gif jpeg png pass-through />
+<action-version version="0.2">
+VideoBackground
+Copyright 2013 Walter Lee Davis
+
+A simple way to use HTML5 video as a page background.
+</action-version>
+<action-file name="mp4" title="MPEG-4 (H.264)">
+<value type=".mp4" />
+</action-file>
+<action-file name="ogg" title="Ogg/Theora">
+<value type=".ogv" />
+</action-file>
+<action-file name="webm" title="WebM">
+<value type=".webm" />
+</action-file>
+<action-checkbox name="Loop" default="yes" />
+<action-markup custom name="conditional">
+<!--[if lt IE 9]>
+<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js">
+</script>
+<![endif]-->
+</action-markup>
+<action-javascript>
+function fwBeforeEndHead(){
+  if(fwPage.fwHTMLLevel < 6){
+    if(!fwPage.html5){
+      fwPage['html5'] = true;
+      var doctype = fwDocument.fwTags.fwFind("!DOCTYPE");
+      if(doctype){
+        doctype.fwFindEnclosing('').fwAddRaw('<!DOCTYPE html>', doctype);
+        doctype.fwDelete();
+      }
+      var html = fwDocument.fwTags.fwFind("html");
+      if(html){
+        html.xmlns = null;
+      }
+    }
+    if(!fwPage.shivved){
+      fwPage['shivved'] = true;
+      var theHead = fwDocument.fwTags.fwFind("head");
+      var theMarkup = fwMarkups['conditional'];
+      theMarkup = theMarkup.toString();
+      theMarkup.fwConvertLineEndings = true;
+      theHead.fwAddRawln(theMarkup);
+    }
+  }
+}
+function fwBeforeEndBody(){
+  var poster = fwDocument.fwTags.fwFind("img",fwItem);
+  if(!!poster){
+    if(!fwPage.videobackground){
+      fwPage['videobackground'] = true;
+      var theHead = fwDocument.fwTags.fwFind("head");
+      var css = theHead.fwAddCSSStyles();
+      css.fwAddRawln('.videobackground {');
+      css.fwAddRawln('  bottom: 0px;');
+      css.fwAddRawln('  right: 0px;');
+      css.fwAddRawln('  min-width: 100%;');
+      css.fwAddRawln('  min-height: 100%;');
+      css.fwAddRawln('  width: auto;');
+      css.fwAddRawln('  height: auto;');
+      css.fwAddRawln('  z-index: -1;');
+      css.fwAddRawln('  overflow: hidden;');
+      css.fwAddRawln('  position: fixed;');
+      css.fwAddRawln('}');
+      css.fwAddRawln('.videobackground img {');
+      css.fwAddRawln('  width: auto !important;');
+      css.fwAddRawln('  height: auto !important;');
+      css.fwAddRawln('  min-width: 100%;');
+      css.fwAddRawln('  min-height: 100%;');
+      css.fwAddRawln('}');
+    }else{
+      fwAbort('Please only add one video background per page.')
+    }
+    var parent = poster.fwFindEnclosing('div');
+    var body = fwDocument.fwTags.fwFind('body');
+    var style = '';
+    if(body.style && body.style.toString().length > 0){
+      var style = body.style.toString().slice(1,-1);
+      style = (style.slice(-1) == ';') ? style : style + '; ';
+    }
+    body.style = fwQuote(style + 'background: none; background-image: none; background-color: transparent');
+    var spacer = body.fwAddRawln();
+    body.fwMove(spacer, body);
+    body.fwMove(poster, spacer);
+    parent.fwDelete();
+    var video = poster.fwAddEnclosing('video',true);
+    video.fwFindEnclosing().fwAddRawOpt("");
+    video.poster = poster.src.toString();
+    video.muted = fwQuote("muted");
+    video.preload = fwQuote("preload");
+    video.autoplay = fwQuote("autoplay");
+    video.loop = (fwParameters['Loop'].fwBoolValue ? fwQuote("loop") : null);
+    video['class'] = fwQuote("videobackground");
+    video.fwAddRawOpt("");
+    video.fwIndent();
+    if(fwParameters['ogg'].fwHasFile || fwParameters['webm'].fwHasFile)
+    if(fwParameters['ogg'].fwHasFile){
+      var source = video.fwAdd('source', false);
+      source.type = fwQuote('video/ogg');
+      source.src = fwQuote(fwParameters['ogg'].toString());
+      video.fwAddRawOpt("");
+    }
+    if(fwParameters['webm'].fwHasFile){
+      var source = video.fwAdd('source', false);
+      source.type = fwQuote('video/webm');
+      source.src = fwQuote(fwParameters['webm'].toString());
+      video.fwAddRawOpt("");
+    }
+  }else{
+    fwAbort('You must select either a WebM or Ogg video as a fallback.')
+  }
+  if(fwParameters['mp4'].fwHasFile){
+    var source = video.fwAdd('source', false);
+    source.type = fwQuote('video/mp4');
+    source.src = fwQuote(fwParameters['mp4'].toString());
+    video.fwAddRawOpt("");
+  }else{
+    fwAbort('You must select an H.264 MPEG video.')
+  }
+  poster.style = null;
+  poster.width = null;
+  poster.height = null;
+  poster['class'] = null;
+  poster.id = null;
+  poster.alt = '"Please consider updating your browser"';
+  video.fwMove(poster);
+  video.fwAddRawOpt("");
+  video.fwOutdent();
+}
+</action-javascript>
+</item-action>
