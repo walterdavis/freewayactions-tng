@@ -337,7 +337,7 @@ if(undefined == FWTag.setStyle){
 </library-action>
 <item-action name="com.wdstudio.flickrshow" title="FlickrShow">
 <action-appliesto html />
-<action-version version="0.2.1">
+<action-version version="0.2.2">
 FlickrShow Action
 Copyright 2012 - 2013 Walter Lee Davis
 
@@ -378,7 +378,7 @@ function fwInterface(){
 function fwBeforeEndBody(){
   if(!fwPage.flickrShow){
     var theHead = fwDocument.fwTags.fwFind("head");
-    theHead.fwAddRawOpt('<script src="http://www.flickrshow.co.uk/static/scripts/flickrshow-7.2.min.js"></script>');
+    theHead.fwAddRawOpt('<script src="http://cdn.freewaypro.com/flickrshow/7.2.1/flickrshow-7.2.min.js"></script>');
     var body = fwDocument.fwTags.fwFind("body");
     fwPage['flickrShow'] = body.fwAddJavaScript();
     body.fwAddRawln('');
