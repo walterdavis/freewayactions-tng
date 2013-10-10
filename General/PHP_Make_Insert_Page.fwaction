@@ -1,0 +1,215 @@
+<page-action name = "PHP Make Insert Page">
+<action-version version="1.3.1">
+“Make Insert Page” Action
+SoftPress Systems 2001
+
+Makes the page an insert page. Completely mucks around with the HTML output.
+Modified by Walter Davis 2004 to keep JavaScript and CSS in the resulting fragment.
+Modified by Walter Davis 2006 to fix issues with FW4 (PageDiv) and ID clashes in resulting composite pages.
+Modified by Walter Davis 2010 to preserve PageDiv without ID clashes.
+</action-version>
+<action-checkbox name="Activate" default=yes>
+<action-checkbox name="preserve" title="Preserve HEAD content" default=no>
+<action-checkbox name="pagediv" title="Preserve and Rename PageDiv" default=no>
+
+<action-javascript>
+
+//	This is a Multistage Action
+//	We are doing a major page conversion job here.
+
+function fwIsDirty()
+{
+	//			return true;
+}
+
+function fwBeforeStartBody()
+{
+	var activate = fwParameters["Activate"].fwBoolValue;
+	if (activate) {
+		var contentTag = fwDocument.fwTags.fwFind("!DOCTYPE");
+		if (contentTag != null)
+		contentTag.fwDelete();
+		//		find all the contents of the tag - the "DOCTYPE" string is the
+		//		first tag that is *ever* written
+		var contents = fwDocument.fwTags.fwFindAllContent();
+
+		//		go through all the contents
+		for (var i in contents)
+		{
+			var content = contents[i];
+
+			//			get get the value of this item of contents
+			var contentStr = content.fwValue;
+
+			//			look for the doctype
+			if (contentStr && contentStr.indexOf("DOCTYPE") > -1)
+			{
+				//				now replace anything of the form "<!DOCTYPExxxxxxxxxx>" with ""
+				content.fwValue = contentStr.replace(/<!DOCTYPE[^>]*>/,"");
+				break;
+			}
+		}
+	}
+}
+function fwAfterEndBody()
+{
+	var activate = fwParameters["Activate"].fwBoolValue;
+	if (activate) {
+		var preserve = fwParameters["preserve"].fwBoolValue;
+		if (preserve) {
+			var contents = fwDocument.fwTags.fwFindAll("meta");
+
+			//	go through all the contents
+			//		get get the value of this item of contents
+			for(i in contents){
+				var contentStr = contents[i].fwToHTML();
+
+				//		look for the doctype
+				var contentTag = fwDocument.fwTags.fwFind("!DOCTYPE");
+				if (contentTag != null)
+				contentTag.fwDelete();
+				if (contentStr && (contentStr.indexOf("GENERATOR") > -1 || contentStr.indexOf("text/html") > -1))
+				{
+					contents[i].fwDelete();
+				}
+			}
+		}
+	}
+}
+
+function fwBeforeEndHTML()
+{
+	var activate = fwParameters["Activate"].fwBoolValue;
+	var pagediv = fwParameters["pagediv"].fwBoolValue;
+	if (activate) {
+		//		Get all the tags we want to remove here
+		//		We don't want these in the body of the page:
+		//		<HEAD>, <HTML>, <BODY>, <TITLE>
+		//		as duplicating these will confuse browsers and make
+		//		the source look messy.
+
+		var getTitle	= fwDocument.fwTags.fwFind( "title" );
+		var getBody		= fwDocument.fwTags.fwFind( "body" );
+		var getHead		= fwDocument.fwTags.fwFind( "head" );
+		var getHTML		= fwDocument.fwTags.fwFind( "html" );
+
+
+		//		Now find anything in the onLoad part of the Body tag
+		//		And plonk it in with all the other JavaScript
+
+		if ( getBody["onLoad"] )
+		{
+			myOnLoad = getBody["onLoad"].toString();
+			myOnLoad = myOnLoad.slice(1,-1);
+			var javascript = getBody.fwAddJavaScript();
+			javascript.fwAddRawOpt( myOnLoad + ";" );
+		}
+
+		//		Now mess around with the tags to remove them
+		//		basically, we're copying all the HTML from the <BODY> tag and
+		//		placing it somewhere else where it won't get deleted.
+		var enclosesHTML = getHTML.fwEnclosing;
+		var headContent = getHead.fwFindAllContent();
+		var bodyContent = getBody.fwFindAllContent();
+
+		enclosesHTML.fwMove( bodyContent, getHead );
+		var preserve = fwParameters["preserve"].fwBoolValue;
+		if (preserve) {
+			enclosesHTML.fwMove( headContent, getHTML );
+		}
+
+
+		//		Delete the <TITLE> and <HTML> tags
+		getHTML.fwDelete();
+		getTitle.fwDelete();
+
+
+		//		Now we want to rename all the image maps
+		//		because Freeway doesn't make unique map names.
+		//		This action will take the current page title and
+		//		use that as the map name. Problem solved.
+		var myName = fwPage.fwFileName;
+		myName = myName.slice(0,myName.indexOf("."));
+		var myMapName = "MyMap" + myName;
+		var Maps = new Array;
+
+		//		Find all the maps in the document
+		var mapAreas = fwDocument.fwTags.fwFindAll("map");
+
+		//		If we have any map areas on this object then we will just use those
+		//		map areas - we will make a list of all the area tags within it.
+		for (var i in mapAreas)
+		{
+
+			//			find the map name
+			var mapArea = mapAreas[i];
+			var mapName = mapArea.name.toString();
+			mapName = mapName.slice(1,-1);
+
+			thisMapName = myMapName + mapName;
+
+			mapArea.name = ( '"' + thisMapName + '"' );
+
+			//			now we want to go through the document and replace the useMap tag name with
+			//			the variable thisMapName
+			var HREFs = fwDocument.fwTags.fwFindAll( "img" );
+
+			for ( l in HREFs )
+			{
+
+				var href = HREFs[l];
+				if ( href.usemap )
+				{
+					//					Convert the reference to a string
+					var areaTag = href.usemap.toString();
+
+					areaTag = areaTag.slice(2,-1)
+					if ( areaTag == mapName )
+					{
+						href.usemap = ( '"#' + thisMapName + '"' );
+
+					}
+				}
+
+			}
+
+
+
+		}
+
+		//	To avoid further confusion, we need to remove the LayoutTable DIV tag.
+		//	again, this is published by default, and out parent page will already
+		//	have a DIV with this name. The include page container will have
+		//	a DIV name.
+
+		divtags=fwDocument.fwTags.fwFindAll( "div" );
+		for (i in divtags )
+		{
+			var divtag = divtags[i];
+			if(divtag.id){
+				myID = divtag["id"].toString();
+				myID = myID.slice(1,-1);
+				if ( myID == "LayoutTable" || myID == "PageDiv" )
+				{
+					if(!pagediv){
+						var contents = divtag.fwFindAllContent();
+						divtag.fwEnclosing.fwMove(contents);
+						divtag.fwDelete();
+					}else{
+						var myName = fwPage.fwFileName;
+						myName = myName.slice(0,myName.indexOf("."));
+						divtag.ID = fwQuote(myName + "_" + myID);
+					}
+				}else{
+					var myName = fwPage.fwFileName;
+					myName = myName.slice(0,myName.indexOf("."));
+					divtag.ID = fwQuote(myName + "_" + myID);
+				}
+			}
+		}
+	}
+}
+
+//								End of action. Phew!
+</action-javascript>
+</page-action>
