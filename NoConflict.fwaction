@@ -1,0 +1,54 @@
+<action-encoding>UTF-8</action-encoding>
+
+<page-action name="com.wdstudio.no_conflict" title="NoConflict">
+<action-version version="1.0">
+Use jQuery alongside Prototype or MooTools.
+(c) 2013 Walter Davis Studio
+</action-version>
+<action-javascript>
+function fwAfterEndHTML(){
+  var scripts = fwDocument.fwTags.fwFindAll('script');
+  for (var i=0; i < scripts.length; i++) {
+    script = scripts[i];
+    if(script.src && script.src.toString().match(/prototype\.js/)){
+      fwPage['prototype'] = i;
+    }
+  }
+  for (var i=0; i < scripts.length; i++) {
+    script = scripts[i];
+    if(script.src && script.src.toString().match(/jquery\-([\d\.]+?)(\.min)?\.js/)){
+      fwPage['jquery'] = i;
+    }
+  }
+  for (var i=0; i < scripts.length; i++) {
+    var content = script.fwFindAllContent();
+    if(content.toString().match(/\$\.noConflict\(.*?\)/)){
+      fwPage['no_conflict'] = i;
+    }
+  };
+  if(fwPage['prototype'] && fwPage.jquery){
+    if(parseInt(fwPage.jquery, 10) < parseInt(fwPage['prototype'], 10)){
+      var dummy = scripts[fwPage['prototype']].fwAddEnclosing();
+      dummy.fwAddRawln();
+      dummy.fwMove(scripts[fwPage.jquery]);
+    }
+    if(!fwPage.no_conflict){
+      var dummy = scripts[fwPage.jquery].fwAddEnclosing();
+      dummy.fwAddRawln();
+      var nc = dummy.fwAdd('script', true);
+      nc.fwAddRawln();
+      nc.fwIndent();
+      nc.type = fwQuote('text/javascript');
+      nc.fwAddRawln('$.noConflict();');
+      nc.fwOutdent();
+    }else{
+      if((fwPage.jquery + 1) != fwPage.no_conflict){
+        var dummy = scripts[fwPage.jquery].fwAddEnclosing();
+        dummy.fwAddRawln();
+        dummy.fwMove(scripts[fwPage.no_conflict]);
+      }
+    }
+  }
+}
+</action-javascript>
+</page-action>
