@@ -1,0 +1,1323 @@
+<action-encoding>UTF-8</action-encoding>
+
+<library-action name="style_accessors">
+<action-version version="1.2.5">
+Style Accessors
+ 
+Get and set styles on any element, regardless where they were initially defined.
+ 
+MIT License
+Copyright (c) 2013 Walter Lee Davis
+</action-version>
+<action-javascript>
+/**
+* Does this page use a root-based Resources folder?
+* @return boolean
+*/
+if(undefined == FWPage.hasRootResourcesFolder){
+  FWPage.prototype.hasRootResourcesFolder = function(){
+    var head = fwDocument.fwTags.fwFind('head');
+    if(!head) fwAbort('Please call hasRootResourcesFolder from fwBeforeEndHead or later.');
+    var links = head.fwFindAll('link', 'href');
+    for(var i in links){
+      if(links[i].href){
+        var link = links[i].href.toString();
+        var page = this.fwFileName.toString().split('.').shift();
+        if(link.match('../css') && link.indexOf(page) > 0){
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+}
+/**
+* Does this page use a Resources folder?
+* @return boolean
+*/
+if(undefined == FWPage.hasNoResourcesFolder){
+  FWPage.prototype.hasNoResourcesFolder = function(){
+    return (! fwClearGif.toString().match('Resources/'))
+  };
+}
+/**
+* Find the folder where the style should be saved
+* @return string
+*/
+if(undefined == FWPage.styleFolder){
+  FWPage.prototype.styleFolder = function(){
+    var rootFolder = fwDocument.fwPages.fwItems[0].fwFolder.fwHttpPath();
+    if(this.hasNoResourcesFolder()){
+      return '/' + this.fwFolder.fwHttpPath();
+    }
+    if(this.hasRootResourcesFolder()){
+      return rootFolder + '/css/';
+    }
+    return '/' + this.fwFolder.fwHttpPath() + 'css/';
+  };
+}
+/**
+* Define a URL for the override sheet for this page
+* @return string relative URL to override sheet
+*/
+if(undefined == FWPage.styleOverrideURL){
+  FWPage.prototype.styleOverrideURL = function(){
+    var folder = this.styleFolder();
+    return folder + this.basename() + '_override.css';
+  };
+}
+/**
+* Define a path to the override sheet for this page.
+* @return string root-relative path to the override sheet
+*/
+if(undefined == FWPage.styleOverridePath){
+  FWPage.prototype.styleOverridePath = function(){
+    var rootFolder = fwDocument.fwPages.fwItems[0].fwFolder;
+    if(!rootFolder) fwAbort('Could not locate the root folder. Make sure there is at least one page in it.')
+    var rootFolderPath =  rootFolder.fwHttpPath(null, true);    
+    return (rootFolderPath + this.styleOverrideURL()).replace(/\//g, ':');
+  };
+}
+/**
+* Basename for the override sheet
+* @return string page filename without extension
+*/
+if(undefined == FWPage.basename){
+  FWPage.prototype.basename = function(){
+    var filename = this.fwFileName.toString().split('.');
+    if(this.hasRootResourcesFolder()){
+      filename = this.fwHttpPath().toString().replace(/\//g,'_').split('.');
+    }
+    filename.pop();
+    return filename.join('.');
+  };
+}
+/**
+* Add a link to an override stylesheet, and create the file for that sheet.
+* Only alters the page once per publish cycle.
+* Must be called from fwBeforeEndHead() or later.
+* @return link to sheet
+*/
+if(undefined == FWPage.addOverride){
+  FWPage.prototype.addOverride = function(){
+    if(this.overrideLink) return this.overrideLink;
+    var head = fwDocument.fwTags.fwFind('head');
+    if(!head) fwAbort('Please call addOverride from fwBeforeEndHead or later.')
+    var link = head.fwAddOpt('link');
+    head.fwAddRawOpt('');
+    var myFile = new FWFile();
+    myFile.fwOpenRead(fwPage.styleOverridePath());
+    myFile.fwClose();
+    fwParameters['styleOverride'].fwSpecify(myFile);
+    link.rel = fwQuote('stylesheet');
+    link.href = fwQuote(fwParameters['styleOverride'].toString());
+    fwParameters['styleOverride'].fwClear();
+    link.type = fwQuote('text/css');
+    this.overrideLink = link;
+    return link;
+  };
+}
+/**
+* Erase or initialize the reset stylesheet.
+* @return FWFile
+*/
+if(undefined == FWPage.resetOverride){
+  FWPage.prototype.resetOverride = function(){
+  	if (this.overrideReset)
+  		return;
+  		
+    var myFile = new FWFile();
+    myFile.fwOpenWrite(this.styleOverridePath(), true);
+    myFile.fwSetEncoding('UTF-8');
+    myFile.fwWrite('');
+    myFile.fwClose();
+    this.overrideReset = true;
+    return myFile;
+  };
+}
+  announce = function(){
+    // This function should be called by all Actions using the library, preferably in
+    // fwBeforeStartHTML(), although really any of the callbacks before the callback
+    // calling renounce() is called should be fine
+  	if (!fwPage.style_accessors_use)
+	  	fwPage.style_accessors_use = 1;
+	else
+	  	fwPage.style_accessors_use += 1;
+  };
+  renounce = function(){
+    // This function should be called by all Actions using the library, preferably in
+    // fwAfterEndHTML(). All the overridden styles will need to have been written prior to the
+    // last call to this function
+  	fwPage.style_accessors_use -= 1;
+  	if (fwPage.style_accessors_use == 0)		// We're the last one...
+  		fwPage.addOverride();
+  };
+/**
+* Convert a string of CSS into a hash.
+* @return object JSON of styles
+*/
+if(undefined == cssToHash){
+  var cssToHash = function(string){
+    var out = {}, string = string.toString().replace(/^"\s*(.+?)\s*"$/, '$1');
+    var pairs = string.split(/\s*;\s*/);
+    for (var i in pairs){
+      var pair = pairs[i].split(/\s*:\s*/);
+      out[pair[0]] = pair[1];
+    };
+    return out;
+  };
+}
+/**
+* Convert a JSON object of style definitions into CSS.
+* @return string CSS style rules
+*/
+if(undefined == hashToCSS){
+  var hashToCSS = function(hash){
+    var out = [];
+    for (var i in hash){
+      var pair = i + ': ' + hash[i];
+      out.push(pair);
+    }
+    return out.join('; ').toString();
+  };
+}
+/**
+* Get the CSS selector for a single tag.
+* @return string
+*/
+if(undefined == FWTag.getSelector){
+  FWTag.prototype.getSelector = function(){
+    if(this.id){
+      var id = '#' + this.id.toString().slice(1,-1);
+      if(id.length > 0){
+        return id + ', ' + id + '.f-ms';
+      }
+    }
+    if(this['class']){
+      classes = this['class'].toString().slice(1,-1).split(/\s+/);
+      return '.' + classes.join('.');
+    }
+  };
+}
+/**
+* Write CSS into the override sheet.
+* @return void
+*/
+if(undefined == FWTag.setOverride){
+  FWTag.prototype.setOverride = function(content){
+    fwPage.resetOverride();	// Init the file. resetOverride() ensures this only happens once.
+    var myFile = new FWFile();
+    myFile.fwOpenRead(fwPage.styleOverridePath());
+    var existing = myFile.fwReadString(myFile.fwAvailable);
+    myFile.fwClose();
+    var overwrite = false;
+    var test = this.id ? this.id.toString().slice(1,-1) : fwItem.toString();
+    if(existing && existing.match(test)){
+      var re = new RegExp(this.getSelector() + ' \\{ (.+?) \\}');
+      existing = existing.replace(re, content);
+      content = existing;
+      overwrite = true;
+    }else{
+      content = content + "\n";
+    }
+    myFile.fwOpenWrite(fwPage.styleOverridePath(), overwrite);
+    myFile.fwSetEncoding('UTF-8');
+    myFile.fwWrite(content);
+    myFile.fwClose();
+    this.style = null;
+  };
+}
+/**
+* Read the content of the entire override sheet.
+* @return object JSON of styles
+*/
+if(undefined == FWTag.getOverride){
+  FWTag.prototype.getOverride = function(){
+    var myFile = new FWFile();
+    myFile.fwOpenRead(fwPage.styleOverridePath(), false);
+    var content = myFile.fwReadString(myFile.fwAvailable);
+    myFile.fwClose();
+    var re = new RegExp(this.getSelector() + ' \\{ (.+?) \\}');
+    if( null != content.match(re) && content.match(re).length > 0 )
+    return( cssToHash(content.match(re)[1]) );
+    return {};
+  };
+}
+/**
+* Get one CSS attribute of a single tag.
+* attributeName is an attribute (width, padding...) returns value (if set) or null.
+* @return mixed
+*/
+if(undefined == FWTag.getStyle){
+  FWTag.prototype.getStyle = function(attributeName){
+    var styles = this.getAllStyles();
+    return styles[attributeName] || null;
+  };
+}
+/**
+* Get override CSS attributes of a single tag, in format for writing to external stylesheet.
+* attributeName is an attribute (width, padding...) returns value (if set) or false.
+* @return string or false
+*/
+if(undefined == FWTag.getStyleAsRule){
+  FWTag.prototype.getStyleAsRule = function(){
+    if(this.style){
+      return this.getSelector() + ' { ' + this.style.toString().slice(1,-1) + ' }';
+    }else{
+      return false;
+    }
+  };
+}
+/**
+* Get all CSS attributes of a single tag, regardless where they were set.
+* @return JSON object
+*/
+if(undefined == FWTag.getAllStyles){
+  FWTag.prototype.getAllStyles = function(){
+    if (this==null) return null;
+    var styles = {}, overrides = {};
+    if(fwPage.fwElementStyle){
+      styles = cssToHash(fwPage.fwElementStyle(this));
+    }
+    if(fwDocument.fwExternalStylesheets){
+      overrides = this.getOverride();
+      for(var i in overrides){
+        styles[i] = overrides[i];
+      }
+    }
+    if(this.style){
+      var inline = cssToHash(this.style);
+      for (var i in inline) {
+        styles[i] = inline[i];
+      };
+    }
+    return styles;
+  };
+}
+/**
+* Sets a CSS attribute such as "position:absolute" in a tag value 
+* Passing an attribute value of null resets that attribute to default
+* @return void
+*/
+if(undefined == FWTag.setStyle){
+  FWTag.prototype.setStyle = function(attributeName, value){
+    if(this == null || arguments.length < 2) return;
+    if(typeof value == 'string' && value.toLowerCase() == 'null') value = null;
+    var styles = {}, external = {};
+    var reset = { /* BACKGROUND */ 'background': 'none', 'background-attachment':
+    'scroll', 'background-clip': 'border-box', 'background-color': 'inherit',
+    'background-image': 'none', 'background-origin': 'padding-box',
+    'background-position': '0% 0%', 'background-repeat': 'repeat', 'background-size':
+    'auto', /* BORDERS */ 'border-collapse': 'separate', 'border': 'none',
+    'border-width': '0', 'border-style': 'none', 'border-color': '#000000',
+    'border-width': 'none', /* top */ 'border-top': 'none', 'border-top-color':
+    '#000000', 'border-top-style': 'none', 'border-top-width': '0', /* right */
+    'border-right': 'none', 'border-right-color': '#000000', 'border-right-style':
+    'none', 'border-right-width': '0', /* bottom */ 'border-bottom': 'none',
+    'border-bottom-color': '#000000', 'border-bottom-style': 'none',
+    'border-bottom-width': '0', /* left */ 'border-left': 'none', 'border-left-color':
+    '#000000', 'border-left-style': 'none', 'border-left-width': '0', /* border-image */
+    'border-image': 'none', 'border-image-outset': '0', 'border-image-repeat': 'stretch',
+    'border-image-slice': '100%', 'border-image-source': 'none', 'border-image-width':
+    '1', /* border-radius */ 'border-radius': '0', 'border-top-left-radius': '0',
+    'border-top-right-radius': '0', 'border-bottom-left-radius': '0',
+    'border-bottom-right-radius': '0', /* BOX ATTRIBUTES */ 'height': 'auto',
+    'max-height': 'none', 'min-height': '0', 'width': 'auto', 'max-width': 'none',
+    'min-width': '0', 'position': 'static', 'display': 'block', 'visibility': 'visible',
+    'top': 'auto', 'right': 'auto', 'bottom': 'auto', 'left': 'auto', 'float': 'none',
+    'clear': 'none', 'margin': '0', 'margin-top': '0', 'margin-right': '0',
+    'margin-bottom': '0', 'margin-left': '0', 'padding': '0', 'padding-top': '0',
+    'padding-right': '0', 'padding-bottom': '0', 'padding-left': '0', 'opacity': '1',
+    'overflow': 'visible', 'overflow-x': 'visible', 'overflow-y': 'visible', 'z-index':
+    'auto', 'zoom': '1', 'filter': 'none', 'cursor': 'auto', 'box-shadow': 'none',
+    'box-sizing': 'content-box', /* TEXT */ 'color': 'inherit', 'font': 'inherit',
+    'font-family': 'inherit', 'font-size': '1em', 'font-style': 'inherit',
+    'font-variant': 'inherit', 'font-weight': 'inherit', 'letter-spacing': 'inherit',
+    'line-height': 'inherit', 'list-style-image': 'none', 'list-style-position':
+    'outside', 'list-style-type': 'disc', 'list-style': 'disc', 'text-decoration':
+    'none', 'text-indent': '0', 'text-shadow': 'none', 'vertical-align': 'baseline',
+    'white-space': 'normal' };
+    if(fwPage.fwElementStyle){
+      external = cssToHash(fwPage.fwElementStyle(this));
+    }
+    if(fwDocument.fwExternalStylesheets){
+      styles = this.getOverride();
+    }
+    if(this.style){
+      var inlines = cssToHash(this.style);
+      for(var i in inlines){
+        styles[i] = inlines[i];
+      }
+    }
+    if(value == null){
+      if(reset[attributeName] && external[attributeName]){
+        styles[attributeName] = reset[attributeName];
+      }else{
+        delete styles[attributeName];
+      }
+    }else{
+      styles[attributeName] = value;
+    }
+    this.style = fwQuote(hashToCSS(styles));
+    if(fwDocument.fwExternalStylesheets){
+      // write styles to override
+      this.setOverride(this.getStyleAsRule());
+      this.style = null;
+    }
+  };
+}
+</action-javascript>
+</library-action>
+
+<library-action name="cdn_functions">
+<action-javascript>
+/**
+ * Write a script to an external file.
+ * name: common name of script (domloaded, windowload, custom)
+ * fileParameter: the action-file that holds this file
+ * content: string or array of strings containing the content
+ * returns URL to generated file, for linking purposes
+ */
+var createExternalScript = function(name, fileParameter, content){
+  if(!content.join){
+    content = [content];
+  }
+  var myFile = new FWFile();
+  if(fwParameters[fileParameter].fwHasFile){
+    myFile.fwOpenWrite(fwParameters[fileParameter].fwValue, true, 'TEXT');
+    myFile.fwSetEncoding('UTF-8');
+  }else{
+    var path = fwPage.fwHttpPath();
+    path = path.replace(/\//g, '_').split('.');
+    var filename = path.pop();
+    path = path.join('.') + '_' + name + '.js';
+    myFile.fwOpenWrite(path, true, 'TEXT');
+    myFile.fwSetEncoding('UTF-8');
+  }
+  for (var i=0; i < content.length; i++) {
+    myFile.fwWrite(content[i] + "\n");
+  };
+  myFile.fwClose();
+  fwParameters[fileParameter].fwSpecify(myFile);
+  var filePath = fwParameters[fileParameter].toString();
+  fwParameters[fileParameter].fwClear();
+  return filePath;
+}
+/**
+ * Write a stylesheet to an external file.
+ * name: common name of sheet (without extension)
+ * fileParameter: the action-file that holds this file
+ * content: string or array of strings containing the content
+ * returns URL to generated file, for linking purposes
+ */
+var createExternalStyle = function(name, fileParameter, content){
+  if(!content.join){
+    content = [content];
+  }
+  var myFile = new FWFile();
+  if(fwParameters[fileParameter].fwHasFile){
+    myFile.fwOpenWrite(fwParameters[fileParameter].fwValue, true, 'TEXT');
+    myFile.fwSetEncoding('UTF-8');
+  }else{
+    var path = fwPage.fwHttpPath();
+    path = path.replace(/\//g, '_').split('.');
+    var filename = path.pop();
+    path = path.join('.') + '_' + name + '.css';
+    myFile.fwOpenWrite(path, true, 'TEXT');
+    myFile.fwSetEncoding('UTF-8');
+  }
+  for (var i=0; i < content.length; i++) {
+    myFile.fwWrite(content[i] + "\n");
+  };
+  myFile.fwClose();
+  fwParameters[fileParameter].fwSpecify(myFile);
+  var filePath = fwParameters[fileParameter].toString();
+  fwParameters[fileParameter].fwClear();
+  return filePath;
+}
+ 
+/**
+* Create a CDN link to a JavaScript library. 
+* name: common filename for the library (prototype, scriptaculous, jquery)
+* path: (optional) fully-qualified URL to the CDN-hosted file
+* (path is not needed if you are linking to prototype or scriptaculous)
+* WARNING! changes any existing link in the page to the library to the 
+* one specified in path or defaults
+* returns reference to the script
+*/
+var findOrCreateScriptLink = function(name, path){
+  var head = fwDocument.fwTags.fwFind('head');
+  var script = pageHasLinkToScript(name), load = '';
+  var libs = {
+    'prototype': 'http://ajax.googleapis.com/ajax/libs/prototype/1.7/prototype.js',
+    'scriptaculous': 'http://ajax.googleapis.com/ajax/libs/scriptaculous/1.9/scriptaculous.js'
+  };
+  if(!libs[name]){
+    if(!!path){
+      libs[name] = path;
+    }else{
+      fwAbort('Please provide a URL for “' + name + '”. Publishing cannot continue.');
+    }
+  }
+  if(!script){
+    script = head.fwAdd('script', true);
+    script.fwAddRawOpt('');
+    head.fwAddRawOpt('');
+  }
+  //catch any load variables from scriptaculous
+  if(name == 'scriptaculous' && script.src && script.src.toString().match(/\?load=/)){
+    load = script.src.toString().match(/(\?load=.+?)"/)[1]; //"
+  }
+  //overwrite the path to the script to make it current
+  script.src = fwQuote(libs[name] + load);
+  script.type = fwQuote('text/javascript');
+  script.charset = fwQuote('utf-8');
+  return script;
+}
+ 
+var pageHasLinkToScript = function(name){
+  var script = false;
+  var scripts = fwDocument.fwTags.fwFindAll('script');
+  for(i in scripts){
+    if(scripts[i].src && scripts[i].src.toString().match(new RegExp(name + '\.js'))){
+      script = scripts[i];
+    }
+  }
+  return script;
+}
+ 
+var findOrCreateStyleLink = function(name, path){
+  var head = fwDocument.fwTags.fwFind('head');
+  var styles = head.fwFindAll('link'), re = new RegExp(name + '\.css');
+  var findStyleLink = function(re){
+    for(i in styles){
+      if(styles[i].href && styles[i].href.toString().match(re)){
+        return styles[i];
+      }
+    }
+  }
+  var style = findStyleLink(re);
+  if(!style){
+    style = head.fwAdd('link', false);
+    head.fwAddRawOpt('');
+  }
+  style.href = fwQuote(path);
+  style.rel = fwQuote('stylesheet');
+  style.type = fwQuote('text/css');
+  style.charset = fwQuote('utf-8');
+  return style;
+}
+ 
+/**
+* Wrapper to simplify function call
+* returns nothing
+*/
+var addPrototype = function(){
+  findOrCreateScriptLink('prototype');
+}
+ 
+/**
+* Add scriptaculous to the page, and load any modules needed if fewer than all.
+* modules: comma-separated string or array of scriptaculous modules
+* returns nothing
+*/
+ 
+var addScriptaculous = function(modules){
+  var scriptaculousLibs = ["builder", "effects", "dragdrop", "controls", "slider", "sound"];
+  var load = [];
+  if(modules.join){
+    modules = modules.join();
+  }
+  var script = findOrCreateScriptLink('scriptaculous');
+  if(script.src.toString().match(/\?load=/)){
+    modules += script.src.toString().split(/\?load=/)[1];
+  }
+  for (var i=0; i < scriptaculousLibs.length; i++) {
+    var re = new RegExp(scriptaculousLibs[i]);
+    if(modules.match(re))
+    load.push(scriptaculousLibs[i]);
+  };
+  if(load.length > 0 && load.length < 6){
+    load = '?load=' + load.join(',');
+    script.src = script.src.toString().replace(/\?load=[^"]+/, '').replace(/"$/, load + '"'); //"
+  }
+}
+
+ 
+</action-javascript>
+</library-action>
+
+<library-action name="classname_functions">
+<action-version version="0.1">
+Classname getter and setter functions, heavily influenced by Prototype.js.
+Copyright 2013 Walter Davis Studio.
+License: MIT License.
+</action-version>
+<action-javascript>
+if(!'test'.strip) String.prototype.strip = function() {
+  return this.replace(/^\s+/, '').replace(/\s+$/, '');
+};
+ 
+if(undefined == FWTag.hasClassName){
+  FWTag.prototype.hasClassName = function(className) {
+    className = fwQuote(className,'','"'); //"
+    var elementClassName = (this["class"]) ? fwQuote(this["class"],'','"') : ''; //"
+    return ((elementClassName.length > 0) && (elementClassName == className || new RegExp("\\b" + className + "\\b").test(elementClassName)));
+  };
+}
+if(undefined == FWTag.addClassName){
+  FWTag.prototype.addClassName = function(className) {
+    className = fwQuote(className,'','"'); //"
+    if (!this.hasClassName(className)){
+      var elementClassName = (this["class"]) ? fwQuote(this["class"],'','"') : ''; //"
+      var out = (elementClassName + ' ' + className).strip();
+      this["class"] = fwQuote(out);
+      return this;
+    }
+  };
+}
+if(undefined == FWTag.removeClassName){
+  FWTag.prototype.removeClassName = function(className) {
+    var className = fwQuote(className,'','"');//"
+    var elementClassName = (this['class']) ? fwQuote(this['class'],'','"') : '';//"
+    elementClassName = elementClassName.replace(
+      new RegExp("(^|\\s+)" + className + "(\\s+|$)"), ' ').strip();
+    this['class'] = (elementClassName.length > 0) ? fwQuote(elementClassName) : null;
+    return this;
+  };
+}
+</action-javascript>
+</library-action>
+
+
+<item-action name="com.wdstudio.responsive_css_menu" title="Responsive CSS Menu">
+<action-version version="1.0">
+(c) 2013 Walter Davis Studio and OnRamp Web Design
+</action-version>
+<action-number name="breakpoint" title="Breakpoint" default="480" width="36" />
+<action-label name="breakpoint_units" title=" px" advance="no" />
+<action-popup name="button_style" title="Button style">
+  <value name="button-black" title="Button (black)">
+  <value name="button-gray" title="Button (gray)">
+  <value name="button-white" title="Button (white)">
+  <value name="hamburger-black" title="Hamburger (black)">
+  <value name="hamburger-gray" title="Hamburger (gray)">
+  <value name="hamburger-white" title="Hamburger (white)">
+  <value name="custom" title="Custom Image">
+</action-popup>
+<action-popup name="button_position" title="Align Button">
+  <value name="left" title="Left">
+  <value name="right" title="Right">
+</action-popup>
+<action-file name="custom_button" title="Image">
+  <value type=".png" />
+  <value type=".jpg" />
+  <value type=".jpeg" />
+  <value type=".gif" />
+</action-file>
+<action-label name="custom_label" title="(45px × 45px)" advance="no" />
+<action-label name="-" />
+<action-popup name="choice" title="Settings for">
+  <value name="Main Menu">
+  <value name="Sub Menus">
+</action-popup>
+<action-label name="main_links" title="Links" />
+<action-number name="main_font_size" default="14" width="36" title="Font size" />
+<action-popup name="main_font_units" title=" " advance="no" width="55">
+<value name="px">
+<value name="em">
+<value name="percent" title="%">
+</action-popup>
+<action-color name="main_text_color" default="FFFFFF" title="Color" />
+<action-color name="main_text_color_hover" default="FFFFFF" title="Hover Color" />
+<action-checkbox name="main_underline" title="Underline" default="no" />
+<action-popup name="main_align" title="Align">
+  <value name="left" title="Left">
+  <value name="center" title="Center">
+  <value name="right" title="Right">
+</action-popup>
+<action-label name="main_padding_label" title="Padding" />
+<action-number name="main_padding" default="0" width="36" title="All" />
+<action-popup name="main_padding_units" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-checkbox name="main_mixed" title="Mixed values" advance="no" default="no" />
+<action-number name="main_padding_top" default="0" width="36" title="Top" />
+<action-popup name="main_padding_top_units" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-number name="main_padding_right" default="0" width="36" title="Right" />
+<action-popup name="main_padding_right_units" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-number name="main_padding_bottom" default="0" width="36" title="Bottom" />
+<action-popup name="main_padding_bottom_units" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-number name="main_padding_left" default="0" width="36" title="Left" />
+<action-popup name="main_padding_left_units" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-label name="main_background" title="Background" />
+<action-color name="main_background_color" default="000000" title="Color" />
+<action-file name="main_background_image" title="Image">
+  <value type=".png" />
+  <value type=".jpg" />
+  <value type=".jpeg" />
+  <value type=".gif" />
+</action-file>
+<action-popup name="main_background_image_tiling" title=" Tile" advance="no" width="60">
+  <value name="no-repeat" title="No">
+  <value name="repeat" title="X+Y">
+  <value name="repeat-x" title="X">
+  <value name="repeat-y" title="Y">
+</action-popup>
+<action-label name="main_background_hover" title="Hover Background" />
+<action-color name="main_background_color_hover" default="000000" title="Color" />
+<action-file name="main_background_image_hover" title="Image">
+  <value type=".png" />
+  <value type=".jpg" />
+  <value type=".jpeg" />
+  <value type=".gif" />
+</action-file>
+<action-popup name="main_background_image_tiling_hover" title=" Tile" advance="no" width="60">
+  <value name="no-repeat" title="No">
+  <value name="repeat" title="X+Y">
+  <value name="repeat-x" title="X">
+  <value name="repeat-y" title="Y">
+</action-popup>
+
+
+
+<action-label name="main_border_label" title="Border" />
+<action-number name="main_border" default="0" width="36" title="All" />
+<action-popup name="main_border_units" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-color name="main_border_color" title=" " width="60" advance="no"/>
+<action-popup name="main_border_style" title=" " width="80" advance="no">
+  <value name="none">
+  <value name="solid" default="yes">
+  <value name="dotted">
+  <value name="dashed">
+  <value name="double">
+  <value name="groove">
+  <value name="ridge">
+  <value name="inset">
+  <value name="outset">
+</action-popup>
+
+<action-checkbox name="main_border_mixed" title="Mixed values" advance="no" default="no" />
+<action-number name="main_border_top" default="0" width="36" title="Top" />
+<action-popup name="main_border_units_top" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-color name="main_border_color_top" title=" " width="60" advance="no"/>
+<action-popup name="main_border_style_top" title=" " width="80" advance="no">
+  <value name="none">
+  <value name="solid" default="yes">
+  <value name="dotted">
+  <value name="dashed">
+  <value name="double">
+  <value name="groove">
+  <value name="ridge">
+  <value name="inset">
+  <value name="outset">
+</action-popup>
+<action-number name="main_border_right" default="0" width="36" title="Right" />
+<action-popup name="main_border_units_right" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-color name="main_border_color_right" title=" " width="60" advance="no"/>
+<action-popup name="main_border_style_right" title=" " width="80" advance="no">
+  <value name="none">
+  <value name="solid" default="yes">
+  <value name="dotted">
+  <value name="dashed">
+  <value name="double">
+  <value name="groove">
+  <value name="ridge">
+  <value name="inset">
+  <value name="outset">
+</action-popup>
+<action-number name="main_border_bottom" default="0" width="36" title="Bottom" />
+<action-popup name="main_border_units_bottom" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-color name="main_border_color_bottom" title=" " width="60" advance="no"/>
+<action-popup name="main_border_style_bottom" title=" " width="80" advance="no">
+  <value name="none">
+  <value name="solid" default="yes">
+  <value name="dotted">
+  <value name="dashed">
+  <value name="double">
+  <value name="groove">
+  <value name="ridge">
+  <value name="inset">
+  <value name="outset">
+</action-popup>
+<action-number name="main_border_left" default="0" width="36" title="Left" />
+<action-popup name="main_border_units_left" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-color name="main_border_color_left" title=" " width="60" advance="no"/>
+<action-popup name="main_border_style_left" title=" " width="80" advance="no">
+  <value name="none">
+  <value name="solid" default="yes">
+  <value name="dotted">
+  <value name="dashed">
+  <value name="double">
+  <value name="groove">
+  <value name="ridge">
+  <value name="inset">
+  <value name="outset">
+</action-popup>
+
+
+
+
+/*
+Sub Menus
+*/
+<action-label name="subs_links" title="Links" />
+<action-number name="subs_font_size" default="12" width="36" title="Font size" />
+<action-popup name="subs_font_units" title=" " advance="no" width="55">
+<value name="px">
+<value name="em">
+<value name="percent" title="%">
+</action-popup>
+<action-color name="subs_text_color" default="FFFFFF" title="Color" />
+<action-color name="subs_text_color_hover" default="FFFFFF" title="Hover Color" />
+<action-checkbox name="subs_underline" title="Underline" default="no" />
+<action-popup name="subs_align" title="Align">
+  <value name="left" title="Left">
+  <value name="center" title="Center">
+  <value name="right" title="Right">
+</action-popup>
+<action-checkbox name="subs_wrap" title="Allow text to wrap" default="no" />
+<action-label name="subs_padding_label" title="Padding" />
+<action-number name="subs_padding" default="0" width="36" title="All" />
+<action-popup name="subs_padding_units" title=" " advance="no" width="55">
+<value name="px">
+<value name="em">
+<value name="percent" title="%">
+</action-popup>
+<action-checkbox name="subs_mixed" title="Mixed values" advance="no" default="no" />
+<action-number name="subs_padding_top" default="0" width="36" title="Top" />
+<action-popup name="subs_padding_top_units" title=" " advance="no" width="55">
+<value name="px">
+<value name="em">
+<value name="percent" title="%">
+</action-popup>
+<action-number name="subs_padding_right" default="0" width="36" title="Right" />
+<action-popup name="subs_padding_right_units" title=" " advance="no" width="55">
+<value name="px">
+<value name="em">
+<value name="percent" title="%">
+</action-popup>
+<action-number name="subs_padding_bottom" default="0" width="36" title="Bottom" />
+<action-popup name="subs_padding_bottom_units" title=" " advance="no" width="55">
+<value name="px">
+<value name="em">
+<value name="percent" title="%">
+</action-popup>
+<action-number name="subs_padding_left" default="0" width="36" title="Left" />
+<action-popup name="subs_padding_left_units" title=" " advance="no" width="55">
+<value name="px">
+<value name="em">
+<value name="percent" title="%">
+</action-popup>
+<action-label name="subs_background" title="Background" />
+<action-color name="subs_background_color" default="000000" title="Color" />
+<action-file name="subs_background_image" title="Image">
+<value type=".png" />
+<value type=".jpg" />
+<value type=".jpeg" />
+<value type=".gif" />
+</action-file>
+<action-popup name="subs_background_image_tiling" title=" Tile" advance="no" width="60">
+  <value name="no-repeat" title="No">
+  <value name="repeat" title="X+Y">
+  <value name="repeat-x" title="X">
+  <value name="repeat-y" title="Y">
+</action-popup>
+<action-label name="subs_background_hover" title="Hover Background" />
+<action-color name="subs_background_color_hover" default="000000" title="Color" />
+<action-file name="subs_background_image_hover" title="Image">
+<value type=".png" />
+<value type=".jpg" />
+<value type=".jpeg" />
+<value type=".gif" />
+</action-file>
+<action-popup name="subs_background_image_tiling_hover" title=" Tile" advance="no" width="60">
+  <value name="no-repeat" title="No">
+  <value name="repeat" title="X+Y">
+  <value name="repeat-x" title="X">
+  <value name="repeat-y" title="Y">
+</action-popup>
+
+
+<action-label name="subs_border_label" title="Border" />
+<action-number name="subs_border" default="0" width="36" title="All" />
+<action-popup name="subs_border_units" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-color name="subs_border_color" title=" " width="60" advance="no"/>
+<action-popup name="subs_border_style" title=" " width="80" advance="no">
+  <value name="none">
+  <value name="solid" default="yes">
+  <value name="dotted">
+  <value name="dashed">
+  <value name="double">
+  <value name="groove">
+  <value name="ridge">
+  <value name="inset">
+  <value name="outset">
+</action-popup>
+
+<action-checkbox name="subs_border_mixed" title="Mixed values" advance="no" default="no" />
+<action-number name="subs_border_top" default="0" width="36" title="Top" />
+<action-popup name="subs_border_units_top" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-color name="subs_border_color_top" title=" " width="60" advance="no"/>
+<action-popup name="subs_border_style_top" title=" " width="80" advance="no">
+  <value name="none">
+  <value name="solid" default="yes">
+  <value name="dotted">
+  <value name="dashed">
+  <value name="double">
+  <value name="groove">
+  <value name="ridge">
+  <value name="inset">
+  <value name="outset">
+</action-popup>
+<action-number name="subs_border_right" default="0" width="36" title="Right" />
+<action-popup name="subs_border_units_right" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-color name="subs_border_color_right" title=" " width="60" advance="no"/>
+<action-popup name="subs_border_style_right" title=" " width="80" advance="no">
+  <value name="none">
+  <value name="solid" default="yes">
+  <value name="dotted">
+  <value name="dashed">
+  <value name="double">
+  <value name="groove">
+  <value name="ridge">
+  <value name="inset">
+  <value name="outset">
+</action-popup>
+<action-number name="subs_border_bottom" default="0" width="36" title="Bottom" />
+<action-popup name="subs_border_units_bottom" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-color name="subs_border_color_bottom" title=" " width="60" advance="no"/>
+<action-popup name="subs_border_style_bottom" title=" " width="80" advance="no">
+  <value name="none">
+  <value name="solid" default="yes">
+  <value name="dotted">
+  <value name="dashed">
+  <value name="double">
+  <value name="groove">
+  <value name="ridge">
+  <value name="inset">
+  <value name="outset">
+</action-popup>
+<action-number name="subs_border_left" default="0" width="36" title="Left" />
+<action-popup name="subs_border_units_left" title=" " advance="no" width="55">
+  <value name="px">
+  <value name="em">
+  <value name="percent" title="%">
+</action-popup>
+<action-color name="subs_border_color_left" title=" " width="60" advance="no"/>
+<action-popup name="subs_border_style_left" title=" " width="80" advance="no">
+  <value name="none">
+  <value name="solid" default="yes">
+  <value name="dotted">
+  <value name="dashed">
+  <value name="double">
+  <value name="groove">
+  <value name="ridge">
+  <value name="inset">
+  <value name="outset">
+</action-popup>
+
+
+
+<action-label name="   " />
+
+// building the stylesheet
+<action-file var name="stylesheet">
+<action-file name="styleOverride" var />
+<action-markup name="style">.responsive-menu {
+  overflow: visible !important;
+  height: 1%;
+  text-align: __main_align__;
+}
+.responsive-menu, .responsive-menu * {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.responsive-menu, .responsive-menu ul, .responsive-menu dl {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0;
+}
+.responsive-menu, .responsive-menu li, .responsive-menu dt, .responsive-menu dd {
+  position: relative;
+  padding: 0;
+  margin: 0;
+}
+.responsive-menu li > ul, .responsive-menu dt > dl, .responsive-menu dd > dl{
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 100%;
+  text-align: __subs_align__;
+  white-space: __subs_wrap__;
+}
+.responsive-menu li:hover > ul, .responsive-menu dt:hover > dl, .responsive-menu dd:hover > dl{
+  display: block;
+}
+.responsive-menu > li, .responsive-menu > dt, .responsive-menu > dd {
+  display: inline-block;
+}
+.responsive-menu li a {
+  display: block;
+  text-decoration: none;
+}
+.responsive-menu > li a {
+  padding: __main_padding__;
+  __main_border__
+  text-decoration: __main_text_decoration__;
+  color: __main_color__;
+  font-size: __main_font_size__;
+  background: __main_background__;
+}
+.responsive-menu > li a:hover {
+  color: __main_color_hover__;
+  background: __main_background_hover__;
+}
+.responsive-menu > li ul a {
+  padding: __subs_padding__;
+  __subs_border__
+  text-decoration: __subs_text_decoration__;
+  color: __subs_color__;
+  font-size: __subs_font_size__;
+  background: __subs_background__;
+}
+.responsive-menu > li ul a:hover {
+  color: __subs_color_hover__;
+  background: __subs_background_hover__;
+}
+.rcm-disclosure {
+  background-image: url(__button_style__);
+  background-repeat: no-repeat;
+  background-position: center center;
+  __button_position__
+  max-width: 45px;
+  min-height: 45px;
+  height: 100%;
+  line-height: 0px;
+  font-size: 0px;
+  display: none;
+  position: relative;
+  overflow: hidden;
+  background-size: 80%;
+}
+@media only screen and (max-width: __breakpoint__px){
+  .responsive-menu { display: none }
+  .responsive-menu > li {
+    width: 100%;
+  }
+  .responsive-menu li ul {
+    position: relative;
+    top: auto;
+    left: auto;
+  }
+  .rcm-disclosure {
+    display: block;
+  }
+  .rcm-disclosure.show + .responsive-menu {
+    display: block;
+  }
+}
+</action-markup>
+<action-file var name="script">
+<action-markup name="toggle">
+(function(){
+  var toggle = function(evt){
+    evt.preventDefault();
+    var element = this;
+    var classname = element.className || '';
+    if(classname.match('show')){
+      element.className = element.className.replace(/\s?show\s?/,'');
+    }else{
+      element.className = element.className + ' show';
+    }
+    return false;
+  }
+  var navitems = document.querySelectorAll('a.rcm-disclosure');
+  for (var i = navitems.length - 1; i >= 0; i--){
+    var navitem = navitems[i];
+    navitem.addEventListener('click', toggle, false);
+  };
+})();
+</action-markup>
+<action-javascript>
+<action-include name="classname_functions">
+<action-include name="cdn_functions">
+<action-include name="style_accessors">
+
+function fwInterface(){
+  var choice = fwParameters.choice.fwValue;
+  for(p in fwParameters){
+    if(fwParameters[p].fwName.toString().match('main_')) fwParameters[p].fwVisible = (choice === 'Main Menu');
+    if(fwParameters[p].fwName.toString().match(/main_padding_(top|right|bottom|left)/)) fwParameters[p].fwVisible = (fwParameters.main_mixed.fwBoolValue && choice === 'Main Menu');
+    if(fwParameters[p].fwName.toString().match(/main_border_.*?(top|right|bottom|left)/)) fwParameters[p].fwVisible = (fwParameters.main_border_mixed.fwBoolValue && choice === 'Main Menu');
+    if(fwParameters[p].fwName.toString().match('subs_')) fwParameters[p].fwVisible = (choice === 'Sub Menus');
+    if(fwParameters[p].fwName.toString().match(/subs_padding_(top|right|bottom|left)/)) fwParameters[p].fwVisible = (fwParameters.subs_mixed.fwBoolValue && choice === 'Sub Menus');
+    if(fwParameters[p].fwName.toString().match(/subs_border_.*?(top|right|bottom|left)/)) fwParameters[p].fwVisible = (fwParameters.subs_border_mixed.fwBoolValue && choice === 'Sub Menus');
+  }
+  fwParameters.main_padding.fwEnable = fwParameters.main_padding_units.fwEnable = (!fwParameters.main_mixed.fwBoolValue && choice === 'Main Menu');
+  fwParameters.subs_padding.fwEnable = fwParameters.subs_padding_units.fwEnable = (!fwParameters.subs_mixed.fwBoolValue && choice === 'Sub Menus');
+  fwParameters.main_border.fwEnable = fwParameters.main_border_units.fwEnable = fwParameters.main_border_color.fwEnable = fwParameters.main_border_style.fwEnable = (!fwParameters.main_border_mixed.fwBoolValue && choice === 'Main Menu');
+  fwParameters.subs_border.fwEnable = fwParameters.subs_border_units.fwEnable = fwParameters.subs_border_color.fwEnable = fwParameters.subs_border_style.fwEnable = (!fwParameters.subs_border_mixed.fwBoolValue && choice === 'Sub Menus');
+  fwParameters.main_background_image_tiling.fwVisible = (fwParameters.main_background_image.fwHasFile && choice === 'Main Menu');
+  fwParameters.main_background_image_tiling_hover.fwVisible = (fwParameters.main_background_image_hover.fwHasFile && choice === 'Main Menu');
+  fwParameters.subs_background_image_tiling.fwVisible = (fwParameters.subs_background_image.fwHasFile && choice === 'Sub Menus');
+  fwParameters.subs_background_image_tiling_hover.fwVisible = (fwParameters.subs_background_image_hover.fwHasFile && choice === 'Sub Menus');
+  fwParameters.custom_button.fwVisible = fwParameters.custom_label.fwVisible = (fwParameters.button_style.fwValue === 'custom');
+}
+
+function replace_vars(template){
+  return template.replace(/__(.+?)__/g, replace_vars_callback)
+}
+
+function replace_vars_callback(match, p1){
+  return eval(p1 + '()');
+}
+
+function main_padding(){
+  if(!fwParameters['main_mixed'].fwBoolValue){
+    return fwParameters['main_padding'].fwValue + units(fwParameters['main_padding_units'].fwValue);
+  }else{
+    return [fwParameters['main_padding_top'].fwValue + units(fwParameters['main_padding_top_units'].fwValue),
+    fwParameters['main_padding_right'].fwValue + units(fwParameters['main_padding_right_units'].fwValue),
+    fwParameters['main_padding_bottom'].fwValue + units(fwParameters['main_padding_bottom_units'].fwValue),
+    fwParameters['main_padding_left'].fwValue + units(fwParameters['main_padding_left_units'].fwValue)].join(' ');
+  }
+}
+function main_border(){
+  if(!fwParameters['main_border_mixed'].fwBoolValue){
+    return "border: " + [fwParameters['main_border'].fwValue + units(fwParameters['main_border_units'].fwValue), color_value('main_border_color'), fwParameters['main_border_style'].fwValue].join(' ') + ';';
+  }else{
+    var borders = ["border-top: " + [fwParameters['main_border_top'].fwValue + units(fwParameters['main_border_units_top'].fwValue), color_value('main_border_color_top'), fwParameters['main_border_style_top'].fwValue].join(' ') + ';',
+    "  border-right: " + [fwParameters['main_border_right'].fwValue + units(fwParameters['main_border_units_right'].fwValue), color_value('main_border_color_right'), fwParameters['main_border_style_right'].fwValue].join(' ') + ';',
+    "  border-bottom: " + [fwParameters['main_border_bottom'].fwValue + units(fwParameters['main_border_units_bottom'].fwValue), color_value('main_border_color_bottom'), fwParameters['main_border_style_bottom'].fwValue].join(' ') + ';',
+    "  border-left: " + [fwParameters['main_border_left'].fwValue + units(fwParameters['main_border_units_left'].fwValue), color_value('main_border_color_left'), fwParameters['main_border_style_left'].fwValue].join(' ') + ';'].join("\n");
+  }
+  return borders;
+}
+function main_text_decoration(){
+  return (fwParameters['main_underline'].fwBoolValue === false) ? 'none' : 'underline';
+}
+function main_color(){
+  return color_value('main_text_color');
+}
+function main_color_hover(){
+  return color_value('main_text_color_hover');
+}
+function main_font_size(){
+  return fwParameters['main_font_size'] + units(fwParameters['main_font_units']);
+}
+function main_background(){
+  var color = color_value('main_background_color'), image, tiling;
+  if(fwParameters['main_background_image'].fwHasFile){
+    image = 'url(../' + fwParameters['main_background_image'].toString() + ')';
+    tiling = fwParameters['main_background_image_tiling'].fwValue
+  }
+  return [color, image, tiling].join(' ');
+}
+function main_background_hover(){
+  var color = color_value('main_background_color_hover'), image, tiling;
+  if(fwParameters['main_background_image_hover'].fwHasFile){
+    image = 'url(../' + fwParameters['main_background_image_hover'].toString() + ')';
+    tiling = fwParameters['main_background_image_tiling_hover'].fwValue
+  }
+  return [color, image, tiling].join(' ');
+}
+function breakpoint(){
+  return fwParameters['breakpoint'].fwValue;
+}
+function subs_padding(){
+  if(!fwParameters['subs_mixed'].fwBoolValue){
+    return fwParameters['subs_padding'] + units(fwParameters['subs_padding_units']);
+  }else{
+    return [fwParameters['subs_padding_top'] + units(fwParameters['subs_padding_top_units']),
+    fwParameters['subs_padding_right'] + units(fwParameters['subs_padding_right_units']),
+    fwParameters['subs_padding_bottom'] + units(fwParameters['subs_padding_bottom_units']),
+    fwParameters['subs_padding_left'] + units(fwParameters['subs_padding_left_units'])].join(' ');
+  }
+}
+function subs_border(){
+  if(!fwParameters['subs_border_mixed'].fwBoolValue){
+    return "border: " + [fwParameters['subs_border'].fwValue + units(fwParameters['subs_border_units'].fwValue), color_value('subs_border_color'), fwParameters['subs_border_style'].fwValue].join(' ') + ';';
+  }else{
+    var borders = ["border-top: " + [fwParameters['subs_border_top'].fwValue + units(fwParameters['subs_border_units_top'].fwValue), color_value('subs_border_color_top'), fwParameters['subs_border_style_top'].fwValue].join(' ') + ';',
+    "  border-right: " + [fwParameters['subs_border_right'].fwValue + units(fwParameters['subs_border_units_right'].fwValue), color_value('subs_border_color_right'), fwParameters['subs_border_style_right'].fwValue].join(' ') + ';',
+    "  border-bottom: " + [fwParameters['subs_border_bottom'].fwValue + units(fwParameters['subs_border_units_bottom'].fwValue), color_value('subs_border_color_bottom'), fwParameters['subs_border_style_bottom'].fwValue].join(' ') + ';',
+    "  border-left: " + [fwParameters['subs_border_left'].fwValue + units(fwParameters['subs_border_units_left'].fwValue), color_value('subs_border_color_left'), fwParameters['subs_border_style_left'].fwValue].join(' ') + ';'].join("\n");
+  }
+  return borders;
+}
+function subs_text_decoration(){
+  return (fwParameters['subs_underline'].fwBoolValue === false) ? 'none' : 'underline';
+}
+function subs_color(){
+  return color_value('subs_text_color');
+}
+function subs_color_hover(){
+  return color_value('subs_text_color_hover');
+}
+function subs_font_size(){
+  return fwParameters['subs_font_size'] + units(fwParameters['subs_font_units']);
+}
+function subs_background(){
+  var color = color_value('subs_background_color'), image, tiling;
+  if(fwParameters['subs_background_image'].fwHasFile){
+    image = 'url(../' + fwParameters['subs_background_image'].toString() + ')';
+    tiling = fwParameters['subs_background_image_tiling'].fwValue
+  }
+  return [color, image, tiling].join(' ');
+}
+function subs_background_hover(){
+  var color = color_value('subs_background_color_hover'), image, tiling;
+  if(fwParameters['subs_background_image_hover'].fwHasFile){
+    image = 'url(../' + fwParameters['subs_background_image_hover'].toString() + ')';
+    tiling = fwParameters['subs_background_image_tiling_hover'].fwValue
+  }
+  return [color, image, tiling].join(' ');
+}
+function subs_wrap(){
+  return (fwParameters['subs_wrap'].fwBoolValue) ? 'normal' : 'nowrap';
+}
+function button_style(){
+  var img = fwParameters['button_style'].fwValue;
+  if(img == 'custom'){
+    if(fwParameters['custom_button'].fwHasFile){
+      return '../' + fwParameters['custom_button'].toString();
+    }else{
+      fwAbort('Please choose an image for the menu button');
+    }
+  }else{
+    return 'http://cdn.freewaypro.com/responsive_css_menu/0.1/' + img + '.png';
+  }
+}
+function button_position(){
+  if(fwParameters['button_position'].fwValue == 'left'){
+    return '';
+  }else{
+    return 'margin-left: auto;';
+  }
+}
+function main_align(){
+  return fwParameters['main_align'].fwValue;
+}
+function subs_align(){
+  return fwParameters['subs_align'].fwValue;
+}
+function units(raw){
+  return (raw == 'percent') ? '%' : raw;
+}
+function color_value(param){
+  var color = fwParameters[param].fwValue;
+  if(color.toString() != ''){
+    color = '#' + color.fwHex;
+  }else{
+    color = 'transparent';
+  }
+  return color;
+}
+function fwBeforeStartHTML(){
+  announce();
+}
+function fwBeforeEndHead(){
+  renounce();
+  var style = replace_vars(fwMarkups['style'].toString());
+  var path = createExternalStyle('responsive-menu', 'stylesheet', style);
+  findOrCreateStyleLink('responsive-menu', path);
+  // fwBigPrompt('CSS Code Preview', style);
+}
+
+function fwBeforeEndBody(){
+  var path = createExternalScript('toggle', 'script', fwMarkups['toggle'].toString());
+  if(!fwPage.toggleScript){
+    fwPage['toggleScript'] = true;
+    var body = fwDocument.fwTags.fwFind('body');
+    var script = body.fwAdd('script', true);
+    script.type = fwQuote('text/javascript');
+    script.src = fwQuote(path);
+    script.fwAddRawln();
+    body.fwAddRawln();
+    body.fwAddRawln('<!-- Responsive CSS Menu Beta Version 8 -->');
+  }
+  var self = fwDocument.fwTags.fwFind(fwItem);
+  if(fwPage.fwHTMLLevel > 5){
+    self.fwTitle = 'nav';
+  }
+  var disclosure = self.fwAddOpt('a', true);
+  disclosure.href = fwQuote('#');
+  disclosure.addClassName('rcm-disclosure');
+  self.setStyle('overflow', 'visible');
+  self.setStyle('background', main_background());
+  if(self){
+    var list = self.fwFind(['ul','dl']);
+    if(list){
+      self.fwMove(list, disclosure);
+      if(list['class']) list['class'] = null;
+      if(! list.fwFindEnclosing(['li','dt','dd'])){
+        list.role = fwQuote('navigation');
+        list.addClassName('responsive-menu');
+      }
+    }else{
+      fwAbort('This item must contain a list')
+    }
+  }
+}
+
+
+</action-javascript>
+</item-action>
