@@ -14,6 +14,9 @@ function fwBeforeEndHead(){
   // one-line link to established CDN-hosted JavaScript:
   findOrCreateScriptLink('example', 'http://cdn.freewaypro.com/example/0.1/example.js');
   
+  // one-line link to established CDN-hosted stylesheet:
+  findOrCreateStyleLink('example', 'http://cdn.freewaypro.com/example/0.1/example.css');
+  
   // write generated script into an external file:
   var path = createExternalScript('external', 'example_generated_file', fwMarkups['external_contents'].toString());
   // ...and link that generated file into the page:
