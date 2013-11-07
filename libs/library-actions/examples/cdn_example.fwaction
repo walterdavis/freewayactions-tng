@@ -1,0 +1,23 @@
+<action-encoding>UTF-8</action-encoding>
+
+//// include the contents of cdn_functions.fwaction.library.js here ////
+
+<page-action name="com.wdstudio.cdn_example" title="CDN Example">
+<action-version version="0.1">
+CDN Example
+</action-version>
+<action-file name="example_generated_file" var />
+<action-markup name="external_contents">console.log('Hello, generated world');
+</action-markup>
+<action-javascript>
+function fwBeforeEndHead(){
+  // one-line link to established CDN-hosted JavaScript:
+  findOrCreateScriptLink('example', 'http://cdn.freewaypro.com/example/0.1/example.js');
+  
+  // write generated script into an external file:
+  var path = createExternalScript('external', 'example_generated_file', fwMarkups['external_contents'].toString());
+  // ...and link that generated file into the page:
+  findOrCreateScriptLink('external', path);
+}
+</action-javascript>
+</page-action>
