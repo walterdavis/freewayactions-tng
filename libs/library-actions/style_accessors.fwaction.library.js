@@ -1,6 +1,6 @@
 <action-encoding>UTF-8</action-encoding>
 <library-action name="style_accessors">
-<action-version version="1.2.6">
+<action-version version="1.2.7">
 Style Accessors
 
 Get and set styles on any element, regardless where they were initially defined.
@@ -214,7 +214,7 @@ if(undefined == FWTag.findLast){
     var els = this.fwFindAll(type);
     for(var i = els.length-1; i >= 0; i--)
     {
-      if(els[i].fwEnclosing != "!--" && !lastEl)
+      if(els[i].fwEnclosing != "!--" && !(/ie/i.test(els[i].href)) && !lastEl)
       var lastEl = els[i];
     }
     return lastEl;
