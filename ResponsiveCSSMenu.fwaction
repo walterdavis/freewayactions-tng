@@ -641,32 +641,27 @@ if(undefined == FWTag.removeClassName){
 <action-popup name="main_padding_units" title=" " advance="no" width="55">
   <value name="px">
   <value name="em">
-  <value name="percent" title="%">
 </action-popup>
 <action-checkbox name="main_mixed" title="Mixed values" advance="no" default="no" />
 <action-number name="main_padding_top" default="0" width="36" title="Top" />
 <action-popup name="main_padding_top_units" title=" " advance="no" width="55">
   <value name="px">
   <value name="em">
-  <value name="percent" title="%">
 </action-popup>
 <action-number name="main_padding_right" default="0" width="36" title="Right" />
 <action-popup name="main_padding_right_units" title=" " advance="no" width="55">
   <value name="px">
   <value name="em">
-  <value name="percent" title="%">
 </action-popup>
 <action-number name="main_padding_bottom" default="0" width="36" title="Bottom" />
 <action-popup name="main_padding_bottom_units" title=" " advance="no" width="55">
   <value name="px">
   <value name="em">
-  <value name="percent" title="%">
 </action-popup>
 <action-number name="main_padding_left" default="0" width="36" title="Left" />
 <action-popup name="main_padding_left_units" title=" " advance="no" width="55">
   <value name="px">
   <value name="em">
-  <value name="percent" title="%">
 </action-popup>
 <action-label name="main_background" title="Background" />
 <action-color name="main_background_color" default="000000" title="Color" />
@@ -820,32 +815,27 @@ Sub Menus
 <action-popup name="subs_padding_units" title=" " advance="no" width="55">
 <value name="px">
 <value name="em">
-<value name="percent" title="%">
 </action-popup>
 <action-checkbox name="subs_mixed" title="Mixed values" advance="no" default="no" />
 <action-number name="subs_padding_top" default="0" width="36" title="Top" />
 <action-popup name="subs_padding_top_units" title=" " advance="no" width="55">
 <value name="px">
 <value name="em">
-<value name="percent" title="%">
 </action-popup>
 <action-number name="subs_padding_right" default="0" width="36" title="Right" />
 <action-popup name="subs_padding_right_units" title=" " advance="no" width="55">
 <value name="px">
 <value name="em">
-<value name="percent" title="%">
 </action-popup>
 <action-number name="subs_padding_bottom" default="0" width="36" title="Bottom" />
 <action-popup name="subs_padding_bottom_units" title=" " advance="no" width="55">
 <value name="px">
 <value name="em">
-<value name="percent" title="%">
 </action-popup>
 <action-number name="subs_padding_left" default="0" width="36" title="Left" />
 <action-popup name="subs_padding_left_units" title=" " advance="no" width="55">
 <value name="px">
 <value name="em">
-<value name="percent" title="%">
 </action-popup>
 <action-label name="subs_background" title="Background" />
 <action-color name="subs_background_color" default="000000" title="Color" />
@@ -1292,7 +1282,7 @@ function fwBeforeEndBody(){
     script.src = fwQuote(path);
     script.fwAddRawln();
     body.fwAddRawln();
-    body.fwAddRawln('<!-- Responsive CSS Menu Beta Version 8 -->');
+    //body.fwAddRawln('<!-- Responsive CSS Menu Beta Version 8 -->');
   }
   var self = fwDocument.fwTags.fwFind(fwItem);
   if(fwPage.fwHTMLLevel > 5){
