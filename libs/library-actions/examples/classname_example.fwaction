@@ -1,0 +1,25 @@
+<action-encoding>UTF-8</action-encoding>
+
+//// include the contents of classname_functions.fwaction.library.js here ////
+
+<page-action name="com.wdstudio.classname_example" title="ClassName Example">
+<action-version version="0.1">
+ClassName Example
+</action-version>
+<action-javascript>
+function fwBeforeEndBody(){
+  var divs = fwDocument.fwTags.fwfindAll('div');
+  // simple high-performance loop
+  for (var i = divs.length - 1; i >= 0; i--){
+    var div = divs[i];
+    // each div has the three methods added directly to it
+    if(div.hasClassName('foo')){
+      div.addClassName('bar');
+    }
+    if(div.hasClassName('baz')){
+      div.removeClassName('baz');
+    }
+  };
+}
+</action-javascript>
+</page-action>
