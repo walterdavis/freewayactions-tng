@@ -1,7 +1,7 @@
 <action-encoding>UTF-8</action-encoding>
 <item-action name="com.wdstudio.videojsr" title="VideoJS">
-<action-appliesto xhtmlstrict xhtml gif jpeg png pass-through />
-<action-version version="0.2">
+<action-appliesto non-html32 gif jpeg png pass-through />
+<action-version version="0.3.1">
 VideoJS
 Copyright 2012 Walter Lee Davis
 
@@ -9,16 +9,23 @@ A simple way to show HTML5 video. Uses the VideoJS player from Steve Heffernan a
 
 VideoJS is licensed under the GNU Lesser General Public License, version 3.
 </action-version>
+<action-popup name="location" title="File handling">
+<value name="local" title="Upload with site" default="yes">
+<value name="remote" title="Link to existing URI">
+</action-popup>
 <action-file name="mp4" title="MPEG-4 (H.264)">
-	<value type=".mp4" />
+<value type=".mp4" />
 </action-file>
+<action-url name="remote_mp4" title="MPEG-4 URI" />
 <action-disclosure name="optional" title="Optional additional formats" default="no" />
 <action-file name="ogg" title="Ogg/Theora">
-	<value type=".ogv" />
+<value type=".ogv" />
 </action-file>
+<action-url name="remote_ogg" title="Ogg/Theora URI" />
 <action-file name="webm" title="WebM">
-	<value type=".webm" />
+<value type=".webm" />
 </action-file>
+<action-url name="remote_webm" title="WebM URI" />
 <action-markup custom name="conditional">
 <!--[if lt IE 9]>
 <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js">
@@ -27,27 +34,32 @@ VideoJS is licensed under the GNU Lesser General Public License, version 3.
 </action-markup>
 <action-javascript>
 String.prototype.strip = function() {
-	return this.replace(/^\s+/, '').replace(/\s+$/, '');
+  return this.replace(/^\s+/, '').replace(/\s+$/, '');
 }
 var hasClassName = function(element, className) {
-	className = fwQuote(className,'','"'); //"
-	var elementClassName = (element["class"]) ? fwQuote(element["class"],'','"') : ''; //"
-	return ((elementClassName.length > 0) && (elementClassName == className || new RegExp("\\b" + className + "\\b").test(elementClassName)));
+  className = fwQuote(className,'','"'); //"
+  var elementClassName = (element["class"]) ? fwQuote(element["class"],'','"') : ''; //"
+  return ((elementClassName.length > 0) && (elementClassName == className || new RegExp("\\b" + className + "\\b").test(elementClassName)));
 };
 
 var addClassName = function(element, className) {
-	className = fwQuote(className,'','"'); //"
-	if (!hasClassName(element,className)){
-		var elementClassName = (element["class"]) ? fwQuote(element["class"],'','"') : ''; //"
-		var out = (elementClassName + ' ' + className).strip();
-		return element["class"] = fwQuote(out);
-	}
+  className = fwQuote(className,'','"'); //"
+  if (!hasClassName(element,className)){
+    var elementClassName = (element["class"]) ? fwQuote(element["class"],'','"') : ''; //"
+    var out = (elementClassName + ' ' + className).strip();
+    return element["class"] = fwQuote(out);
+  }
 };
 
 function fwInterface(){
-	if (fwParameters['ogg'].fwHasFile || fwParameters['webm'].fwHasFile) fwParameters['optional'].fwBoolValue = true;
-	fwParameters['ogg'].fwVisible = fwParameters['optional'].fwBoolValue;
-	fwParameters['webm'].fwVisible = fwParameters['optional'].fwBoolValue;
+  if (fwParameters['ogg'].fwHasFile || fwParameters['webm'].fwHasFile || fwParameters['remote_ogg'].fwValue != '' || fwParameters['remote_webm'].fwValue != '') fwParameters['optional'].fwBoolValue = true;
+  for(p in fwParameters){
+    var param = fwParameters[p];
+    if(param.fwName.toString().match(/^mp4$/)) param.fwVisible = (fwParameters['location'].fwValue == 'local');
+    if(param.fwName.toString().match(/^remote_mp4$/)) param.fwVisible = (fwParameters['location'].fwValue == 'remote');
+    if(param.fwName.toString().match(/^(webm|ogg)$/)) param.fwVisible = (fwParameters['location'].fwValue == 'local' && fwParameters['optional'].fwBoolValue);
+    if(param.fwName.toString().match(/^(remote_webm|remote_ogg)$/)) param.fwVisible = (fwParameters['location'].fwValue == 'remote' && fwParameters['optional'].fwBoolValue);
+  }
 }
 function fwBeforeEndHead(){
   if(fwPage.fwHTMLLevel < 6){
@@ -73,56 +85,65 @@ function fwBeforeEndHead(){
     }
   }
 }
+function video_format(format){
+  if(fwParameters[format].fwHasFile && fwParameters['location'] == 'local'){
+    return fwParameters[format].toString();
+  }
+  if(fwParameters['remote_' + format].fwValue != '' && fwParameters['location'] == 'remote'){
+    return fwParameters['remote_' + format].fwValue;
+  }
+  return false;
+}
 function fwBeforeEndBody(){
-	var poster = fwDocument.fwTags.fwFind("img",fwItem);
-	if(!!poster){
-		if(!fwPage.videojs){
-			fwPage['videojs'] = true;
-			var theHead = fwDocument.fwTags.fwFind("head");
-			var cssLink = theHead.fwAdd('link',false);
-			cssLink['rel'] = fwQuote('stylesheet');
-			cssLink['href'] = fwQuote('http://vjs.zencdn.net/c/video-js.css');
-			theHead.fwAddRawOpt("");
-			var scriptTag = theHead.fwAdd('script',true);
-			scriptTag.type = fwQuote('text/javascript');
-			scriptTag.charset = fwQuote('utf-8');
-			scriptTag.src = fwQuote("http://vjs.zencdn.net/c/video.js");
-			scriptTag.fwAddRawOpt("");
-		}
-		var video = poster.fwAddEnclosing('video',true);
-		video.fwFindEnclosing().fwAddRawOpt("");
-		video.poster = poster.src.toString();
-		video.controls = fwQuote("controls");
-		video.preload = fwQuote("none");
-		video['class'] = fwQuote("video-js vjs-default-skin");
-		video.width = fwQuote(poster.width);
-		video.height = fwQuote(poster.height);
-		video['data-setup'] = fwQuote('{}');
-		poster.fwDelete();
-		video.fwAddRawOpt("");
-		video.fwIndent();
-		if(fwParameters['ogg'].fwHasFile){
-			var source = video.fwAdd('source', false);
-			source.type = fwQuote('video/ogg');
-			source.src = fwQuote(fwParameters['ogg'].toString());
-			video.fwAddRawOpt("");
-		}
-		if(fwParameters['webm'].fwHasFile){
-			var source = video.fwAdd('source', false);
-			source.type = fwQuote('video/webm');
-			source.src = fwQuote(fwParameters['webm'].toString());
-			video.fwAddRawOpt("");
-		}
-		if(fwParameters['mp4'].fwHasFile){
-			var source = video.fwAdd('source', false);
-			source.type = fwQuote('video/mp4');
-			source.src = fwQuote(fwParameters['mp4'].toString());
-			video.fwAddRawOpt("");
-		}else{
-			alert('You must select an H.264 MPEG video.')
-		}
-		video.fwOutdent();
-	}
+  var poster = fwDocument.fwTags.fwFind("img",fwItem);
+  if(!!poster){
+    if(!fwPage.videojs){
+      fwPage['videojs'] = true;
+      var theHead = fwDocument.fwTags.fwFind("head");
+      var cssLink = theHead.fwAdd('link',false);
+      cssLink['rel'] = fwQuote('stylesheet');
+      cssLink['href'] = fwQuote('http://vjs.zencdn.net/c/video-js.css');
+      theHead.fwAddRawOpt("");
+      var scriptTag = theHead.fwAdd('script',true);
+      scriptTag.type = fwQuote('text/javascript');
+      scriptTag.charset = fwQuote('utf-8');
+      scriptTag.src = fwQuote("http://vjs.zencdn.net/c/video.js");
+      scriptTag.fwAddRawOpt("");
+    }
+    var video = poster.fwAddEnclosing('video',true);
+    video.fwFindEnclosing().fwAddRawOpt("");
+    video.poster = poster.src.toString();
+    video.controls = fwQuote("controls");
+    video.preload = fwQuote("none");
+    video['class'] = fwQuote("video-js vjs-default-skin");
+    video.width = fwQuote(poster.width);
+    video.height = fwQuote(poster.height);
+    video['data-setup'] = fwQuote('{}');
+    poster.fwDelete();
+    video.fwAddRawOpt("");
+    video.fwIndent();
+    if(video_format('ogg')){
+      var source = video.fwAdd('source', false);
+      source.type = fwQuote('video/ogg');
+      source.src = fwQuote(video_format('ogg'));
+      video.fwAddRawOpt("");
+    }
+    if(video_format('webm')){
+      var source = video.fwAdd('source', false);
+      source.type = fwQuote('video/webm');
+      source.src = fwQuote(video_format('webm'));
+      video.fwAddRawOpt("");
+    }
+    if(video_format('mp4')){
+      var source = video.fwAdd('source', false);
+      source.type = fwQuote('video/mp4');
+      source.src = fwQuote(video_format('mp4'));
+      video.fwAddRawOpt("");
+    }else{
+      alert('You must select an H.264 MPEG video.')
+    }
+    video.fwOutdent();
+  }
 }
 </action-javascript>
 </item-action>
