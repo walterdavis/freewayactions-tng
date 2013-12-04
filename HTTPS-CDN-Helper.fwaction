@@ -1,0 +1,26 @@
+<action-encoding>UTF-8</action-encoding>
+<page-action name="https_cdn_helper" title="HTTPS CDN Helper">
+<action-version version="0.1">
+HTTPS CDN Helper
+Copyright 2013 Walter Davis Studio
+</action-version>
+<action-checkbox name="secure" title="Use HTTPS links to Google CDN" default="no" />
+<action-javascript>
+function fwAfterEndHTML(){
+  var scripts = fwDocument.fwTags.fwFindAll('script');
+  for (var i = scripts.length - 1; i >= 0; i--){
+    var script = scripts[i];
+    if(fwParameters['secure'].fwBoolValue && script.src && script.src.toString().match(/googleapis/)){
+      script.src = script.src.toString().replace(/^"http:/,'"https:');
+    }
+  };
+  var links = fwDocument.fwTags.fwFindAll('link');
+  for (var i = links.length - 1; i >= 0; i--){
+    var link = links[i];
+    if(fwParameters['secure'].fwBoolValue && link.href && link.href.toString().match(/googleapis/)){
+      link.href = link.href.toString().replace(/^"http:/,'"https:');
+    }
+  };
+}
+</action-javascript>
+</page-action>
