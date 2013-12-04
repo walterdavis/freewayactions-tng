@@ -372,7 +372,7 @@ if(undefined == FWTag.setStyle){
 </action-javascript>
 </library-action>
 <item-action name="com.wdstudio.TemplateHelper" title="TemplateHelper">
-<action-version version="0.6">
+<action-version version="0.6.1">
 “TemplateHelper” Action
 Walter Davis Studio 2007-2013
 </action-version>
@@ -485,7 +485,7 @@ function fwAfterEndHTML()
         inner = container.fwFind(['div','table','']);
         if(inner && inner.fwFind(['input','select','textarea'])){
           f = inner.fwAddEnclosing("form",true);
-          f['method'] = (!!form.method) ? fwQuote(form.method) : fwQuote('');
+          f['method'] = (!!form.method) ? form.method : fwQuote('');
           f['action'] = form.action;
           if(form.id) f['id'] = form.id;
         }
