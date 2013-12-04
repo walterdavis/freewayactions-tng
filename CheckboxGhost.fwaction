@@ -1,0 +1,32 @@
+<page-action name="com.wdstudio.checkbox_ghost" title="CheckboxGhost">
+<action-version version="0.1">
+“CheckboxGhost” Action
+Walter Davis Studio 2013
+</action-version>
+
+<action-javascript>
+
+
+function fwBeforeEndBody(){
+  var elms = fwDocument.fwTags.fwFindAll('input');
+  if (!elms) return;
+  for (i in elms){
+    var e = elms[i];
+    if(e.name){
+      if(e.type == 'checkbox'){
+        var wrap = e.fwAddEnclosing();
+        var ghost = wrap.fwAdd('input');
+        ghost.type = fwQuote('hidden');
+        ghost.name = e.name;
+        ghost.value = fwQuote('');
+        wrap.fwMove(e, ghost);
+      }
+    }
+  }
+}
+
+
+
+</action-javascript>
+
+</page-action>
