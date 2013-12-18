@@ -1,0 +1,73 @@
+<action-encoding>UTF-8</action-encoding>
+<page-action name="Simple Site Search Helper">
+<action-version version="0.1">
+Simple Site Search Helper
+(c)2013 Walter Davis Studio
+Apply to the same page as the Simple Site Search field to avoid clashes with a normal form on that page.
+</action-version>
+<action-javascript>
+function fwBeforeStartHTML(){
+  fwPage.originalForm = {};
+}
+function fwBeforeEndBody(){
+  // find the first div, which should be PageDiv
+  var pd = fwDocument.fwTags.fwFind('div');
+  var form = pd.fwFindEnclosing('form');
+  if(!!form){
+    // if there's a form wrapping the PD, memorize its original settings
+    fwPage.originalForm.action = form.action.toString();
+    fwPage.originalForm.method = form.method.toString();
+  }
+}
+function fwBeforeEndHTML(){
+  // find the search fields
+  var inputs = fwDocument.fwTags.fwFindAll('input'), q, t;
+  for (var i=0; i < inputs.length; i++) {
+    if(inputs[i].name && inputs[i].name == '"q"'){
+      q = inputs[i];
+    }
+    if(inputs[i].name && inputs[i].name == '"t"'){
+      t = inputs[i];
+    }
+  };
+  if(!!q && !!t){
+    var body = fwDocument.fwTags.fwFind('body');
+    var pd = fwDocument.fwTags.fwFind('div');
+    var form = pd.fwFindEnclosing('form');
+    if(!!form){
+      // rearrange the page
+      var content = pd.fwFindAllContent();
+      for (var i=0; i < content.length; i++) {
+        form.fwMove(content[i]);
+      };
+      body.fwMove(pd);
+      body.fwAddRawln();
+      pd.fwIndent();
+      var spacer = pd.fwAddRawln();
+      pd.fwMove(form, spacer);
+      // add a new form to hold the search
+      spacer = pd.fwAddRawln();
+      pd.fwOutdent();
+      var searchForm = pd.fwAdd('form', true, spacer);
+      // position to align the form element to the original page
+      searchForm.style = fwQuote('position:absolute; top:0; left:0; width:100%; height: 0; overflow: visible: z-index:1000');
+      // copy the attributes
+      searchForm.action = form.action.toString();
+      searchForm.method = form.method.toString();
+      // move the form elements
+      searchForm.fwIndent();
+      spacer = searchForm.fwAddRawln();
+      searchForm.fwMove(q, spacer);
+      spacer = searchForm.fwAddRawln();
+      searchForm.fwMove(t, spacer);
+      searchForm.fwAddRawln();
+      searchForm.fwOutdent();
+      pd.fwAddRawln();
+      // restore the original form attributes
+      form.action = fwPage.originalForm.action;
+      form.method = fwPage.originalForm.method;
+    }
+  }
+}
+</action-javascript>
+</page-action>
