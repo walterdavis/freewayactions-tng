@@ -1,0 +1,19 @@
+<action-encoding>UTF-8</action-encoding>
+<action name="DT"  height="12" width="30">
+<action-version version="0.1">
+DT Action
+(c)2013 Walter Davis Studio
+</action-version>
+<action-javascript>
+function fwBeforeEndBody(){
+  var element = fwDocument.fwTags.fwFind(fwItem);
+  if(!!element){
+    var enclosing = element.fwFindEnclosing('dd');
+    if(!!enclosing){
+      enclosing.fwTitle = 'dt';
+    }
+    element.fwDelete();
+  }
+}
+</action-javascript>
+</action>
