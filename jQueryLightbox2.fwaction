@@ -1,0 +1,184 @@
+<action-encoding>UTF-8</action-encoding>
+<library-action name="functions">
+<action-javascript>
+
+/**
+* Create a CDN link to a JavaScript library. 
+* name: common filename for the library (prototype, scriptaculous, jquery)
+* path: (optional) fully-qualified URL to the CDN-hosted file
+* (path is not needed if you are linking to prototype or scriptaculous)
+* WARNING! changes any existing link in the page to the library to the 
+* one specified in path or defaults
+* returns reference to the script
+*/
+var findOrCreateScriptLink = function(name, path){
+  var head = fwDocument.fwTags.fwFind('head');
+  var script = pageHasLinkToScript(name), load = '';
+  var libs = {
+    'prototype': 'http://ajax.googleapis.com/ajax/libs/prototype/1.7/prototype.js',
+    'scriptaculous': 'http://ajax.googleapis.com/ajax/libs/scriptaculous/1.9/scriptaculous.js'
+  };
+  if(!libs[name]){
+    if(!!path){
+      libs[name] = path;
+    }else{
+      fwAbort('Please provide a URL for “' + name + '”. Publishing cannot continue.');
+    }
+  }
+  if(!script){
+    script = head.fwAdd('script', true);
+    script.fwAddRawOpt('');
+    head.fwAddRawOpt('');
+  }
+  //catch any load variables from scriptaculous
+  if(name == 'scriptaculous' && script.src && script.src.toString().match(/\?load=/)){
+    load = script.src.toString().match(/(\?load=.+?)"/)[1]; //"
+  }
+  //overwrite the path to the script to make it current
+  script.src = fwQuote(libs[name] + load);
+  script.type = fwQuote('text/javascript');
+  script.charset = fwQuote('utf-8');
+  return script;
+}
+
+var pageHasLinkToScript = function(name){
+  var script = false;
+  var scripts = fwDocument.fwTags.fwFindAll('script');
+  for(i in scripts){
+    if(scripts[i].src && scripts[i].src.toString().match(new RegExp(name + '.js'))){
+      script = scripts[i];
+    }
+  }
+  return script;
+}
+
+var findOrCreateStyleLink = function(name, path){
+  var head = fwDocument.fwTags.fwFind('head');
+  var styles = head.fwFindAll('link'), re = new RegExp(name + '\.css');
+  var findStyleLink = function(re){
+    for(i in styles){
+      if(styles[i].href && styles[i].href.toString().match(re)){
+        return styles[i];
+      }
+    }
+  }
+  var style = findStyleLink(re);
+  if(!style){
+    style = head.fwAdd('link', false);
+    head.fwAddRawOpt('');
+  }
+  style.href = fwQuote(path);
+  style.rel = fwQuote('stylesheet');
+  style.type = fwQuote('text/css');
+  style.charset = fwQuote('utf-8');
+  return style;
+}
+
+/**
+* Wrapper to simplify function call
+* returns nothing
+*/
+var addPrototype = function(){
+  findOrCreateScriptLink('prototype');
+}
+
+/**
+* Add scriptaculous to the page, and load any modules needed if fewer than all.
+* modules: comma-separated string or array of scriptaculous modules
+* returns nothing
+*/
+
+var addScriptaculous = function(modules){
+  var scriptaculousLibs = ["builder", "effects", "dragdrop", "controls", "slider", "sound"];
+  var load = [];
+  if(modules.join){
+    modules = modules.join();
+  }
+  var script = findOrCreateScriptLink('scriptaculous');
+  if(script.src.toString().match(/\?load=/)){
+    modules += script.src.toString().split(/\?load=/)[1];
+  }
+  for (var i=0; i < scriptaculousLibs.length; i++) {
+    var re = new RegExp(scriptaculousLibs[i]);
+    if(modules.match(re))
+    load.push(scriptaculousLibs[i]);
+  };
+  if(load.length > 0 && load.length < 6){
+    load = '?load=' + load.join(',');
+    script.src = script.src.toString().replace(/\?load=[^"]+/, '').replace(/"$/, load + '"'); //"
+  }
+}
+
+
+if(!'test'.strip) String.prototype.strip = function() {
+  return this.replace(/^\s+/, '').replace(/\s+$/, '');
+};
+
+if(undefined == FWTag.hasClassName){
+  FWTag.prototype.hasClassName = function(className) {
+    className = fwQuote(className,'','"'); //"
+    var elementClassName = (this["class"]) ? fwQuote(this["class"],'','"') : ''; //"
+    return ((elementClassName.length > 0) && (elementClassName == className || new RegExp("\\b" + className + "\\b").test(elementClassName)));
+  };
+}
+if(undefined == FWTag.addClassName){
+  FWTag.prototype.addClassName = function(className) {
+    className = fwQuote(className,'','"'); //"
+    if (!this.hasClassName(className)){
+      var elementClassName = (this["class"]) ? fwQuote(this["class"],'','"') : ''; //"
+      var out = (elementClassName + ' ' + className).strip();
+      this["class"] = fwQuote(out);
+      return this;
+    }
+  };
+}
+if(undefined == FWTag.removeClassName){
+  FWTag.prototype.removeClassName = function(className) {
+    var className = fwQuote(className,'','"');//"
+    var elementClassName = (this['class']) ? fwQuote(this['class'],'','"') : '';//"
+    elementClassName = elementClassName.replace(
+      new RegExp("(^|\\s+)" + className + "(\\s+|$)"), ' ').strip();
+    this['class'] = (elementClassName.length > 0) ? fwQuote(elementClassName) : null;
+    return this;
+  };
+}
+
+</action-javascript>
+</library-action>
+
+<item-action name="com.wdstudio.jquery_lightbox_2" title="jQuery Lightbox 2">
+<action-appliesto graphic pass-through/>
+<action-version version="0.1">
+jQuery Lightbox 2
+Copyright 2013 Walter Lee Davis
+
+</action-version>
+<action-file name="original" title="Large Image" />
+<action-text name="lightbox" />
+<action-text name="title" />
+<action-javascript>
+<action-include name="functions">
+function fwBeforeEndHead(){
+  findOrCreateScriptLink('jquery-1.10.2.min', 'http://ajax-cdn.s3.amazonaws.com/lightbox2/js/jquery-1.10.2.min.js');
+  findOrCreateScriptLink('lightbox-2.6.min', 'http://ajax-cdn.s3.amazonaws.com/lightbox2/js/lightbox-2.6.min.js');
+  findOrCreateStyleLink('lightbox', 'http://ajax-cdn.s3.amazonaws.com/lightbox2/css/lightbox.css');
+}
+function fwBeforeEndBody(){
+  var img = fwDocument.fwTags.fwFind("img",fwItem);
+  if(img){
+    if(fwParameters.original && fwParameters.original.fwHasFile){
+      var link = img.fwFindEnclosing('a');
+      if(!link){
+        link = img.fwAddEnclosing('a',true);
+      }
+      var original = fwParameters.original;
+      link['href'] = fwQuote(original.toString());
+      link['data-lightbox'] = fwQuote(fwParameters['lightbox'].fwValue);
+      link['title'] = fwQuote(fwParameters['title'].fwValue);
+      img.addClassName('resimage');
+    }
+  }
+}
+</action-javascript>
+</item-action>
+
