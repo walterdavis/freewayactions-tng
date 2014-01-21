@@ -5,9 +5,33 @@ Simple Site Search Helper
 (c)2013 Walter Davis Studio
 Apply to the same page as the Simple Site Search field to avoid clashes with a normal form on that page.
 </action-version>
+<action-markup name="search_return_handler">var search_field = document.querySelector('#__q_id__');
+search_field.addEventListener('keydown', function(evt){
+  var code;
+  if(evt.keyCode) code = evt.keyCode;
+  else if(evt.which) code = evt.which;
+  if(code === 13){
+    evt.preventDefault();
+    window.location.href = '__search_action__?q=' + encodeURIComponent(this.value) + '&t=' + (new Date().getTime());
+    return false;
+  }
+});</action-markup>
+<action-markup name="button_click_handler">
+document.querySelector('#__s_id__').addEventListener('click', function(evt){
+  evt.preventDefault();
+  window.location.href = '__search_action__?q=' + encodeURIComponent(search_field.value) + '&t=' + (new Date().getTime());
+  return false;
+});</action-markup>
 <action-javascript>
 function fwBeforeStartHTML(){
   fwPage.originalForm = {};
+}
+function fwBeforeEndHead(){
+  var head = fwDocument.fwTags.fwFind('head');
+  var script = head.fwAdd('script',true);
+  script.type = '"text/javascript"';
+  script.src = '"http://cdn.freewaypro.com/add_event_listener_polyfill/1.0/add_event_listener_polyfill.js"';
+  head.fwAddRawln();
 }
 function fwBeforeEndBody(){
   // find the first div, which should be PageDiv
@@ -21,53 +45,59 @@ function fwBeforeEndBody(){
 }
 function fwBeforeEndHTML(){
   // find the search fields
-  var inputs = fwDocument.fwTags.fwFindAll('input'), q, t;
+  var inputs = fwDocument.fwTags.fwFindAll('input'), q, t, s;
   for (var i=0; i < inputs.length; i++) {
-    if(inputs[i].name && inputs[i].name == '"q"'){
-      q = inputs[i];
-    }
-    if(inputs[i].name && inputs[i].name == '"t"'){
-      t = inputs[i];
+    if(inputs[i].name){
+      if(inputs[i].name == '"q"'){
+        q = inputs[i];
+      }
+      if(inputs[i].name == '"t"'){
+        t = inputs[i];
+      }
+      if(inputs[i].name == '"s"'){
+        s = inputs[i];
+      }
     }
   };
   if(!!q && !!t){
-    var body = fwDocument.fwTags.fwFind('body');
     var pd = fwDocument.fwTags.fwFind('div');
     var form = pd.fwFindEnclosing('form');
     if(!!form){
-      // rearrange the page
-      var content = pd.fwFindAllContent();
-      for (var i=0; i < content.length; i++) {
-        form.fwMove(content[i]);
-      };
-      body.fwMove(pd);
-      body.fwAddRawln();
-      pd.fwIndent();
-      var spacer = pd.fwAddRawln();
-      pd.fwMove(form, spacer);
-      // add a new form to hold the search
-      spacer = pd.fwAddRawln();
-      pd.fwOutdent();
-      var searchForm = pd.fwAdd('form', true, spacer);
-      // position to align the form element to the original page
-      searchForm.style = fwQuote('position:absolute; top:0; left:0; width:100%; height: 0; overflow: visible: z-index:1000');
-      // copy the attributes
-      searchForm.action = form.action.toString();
-      searchForm.method = form.method.toString();
-      // move the form elements
-      searchForm.fwIndent();
-      spacer = searchForm.fwAddRawln();
-      searchForm.fwMove(q, spacer);
-      spacer = searchForm.fwAddRawln();
-      searchForm.fwMove(t, spacer);
-      searchForm.fwAddRawln();
-      searchForm.fwOutdent();
-      pd.fwAddRawln();
+      fwPage.search_action = form.action.toString().replace(/"/g, '');//"
       // restore the original form attributes
       form.action = fwPage.originalForm.action;
       form.method = fwPage.originalForm.method;
+      fwPage.q_id = q.id.toString().replace(/"/g, '');//"
+      q.name = null;
+      t.fwDelete();
+      fwPage.s_id = (!!s) ? s.id.toString().replace(/"/g, '') : null;//"
+      var scr = fwMarkups.search_return_handler.toString().replace('__search_action__', fwPage.search_action).replace('__q_id__', fwPage.q_id);
+      if(!!s){
+        s.name = null;
+        scr += fwMarkups.button_click_handler.toString().replace('__search_action__', fwPage.search_action).replace('__s_id__', fwPage.s_id);
+      }
+      var script = form.fwAdd('script', true);
+      script.fwAddRawln();
+      script.type = '"text/javascript"';
+      script.fwAddRawln(scr);
+      form.fwAddRawln();
     }
   }
 }
 </action-javascript>
 </page-action>
+<item-action name="Simple Site Search Submit">
+<action-appliesto button gif jpeg png pass-through />
+<action-version version="0.1">
+Simple Site Search Submit Action
+(c)2013 Walter Davis Studio
+
+Apply to a submit button to mark it as belonging to the Simple Site Search form.
+</action-version>
+<action-javascript>
+function fwBeforeEndBody(){
+  var button = fwDocument.fwTags.fwFind(fwItem);
+  button.name = '"s"';
+}
+</action-javascript>
+</item-action>
