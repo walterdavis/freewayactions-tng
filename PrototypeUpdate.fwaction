@@ -1,0 +1,24 @@
+<action-encoding>UTF-8</action-encoding>
+<page-action name="prototype_update" title="PrototypeUpdate">
+<action-version version="0.2">
+Prototype Update
+
+Fix Prototype for IE 9 and 10.
+Copyright 2013 Walter Davis Studio
+</action-version>
+<action-checkbox name="secure" title="Use HTTPS link to CDN" default="no" />
+<action-javascript>
+function fwAfterEndHTML(){
+  var head = fwDocument.fwTags.fwFind('head'), head_string;
+  var better_prototype = '<script type="text/javascript" src="http://cdn.freewaypro.com/prototype/1.7.1/prototype.js"></script>';
+  if(!!fwParameters.secure.fwBoolValue) better_prototype = '<script type="text/javascript" src="https://dnk2vbhoq39rr.cloudfront.net/prototype/1.7.1/prototype.js"></script>';
+  var better_scripty = '<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/scriptaculous/1.9/scriptaculous.js"></script>';
+  if(!!fwParameters.secure.fwBoolValue) better_scripty = '<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/scriptaculous/1.9/scriptaculous.js"></script>';
+  head_string = head.fwToHTML().toString().replace(/<script [^>]+\/prototype[^>]+>[^<]*?<\/script>/, better_prototype);
+  head_string = head_string.replace(/<script [^>]+\/scriptaculous[^>]+>[^<]*?<\/script>/, better_scripty);
+  var dummy = head.fwAddEnclosing();
+  dummy.fwAddRaw(head_string);
+  head.fwDelete();
+}
+</action-javascript>
+</page-action>
