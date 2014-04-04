@@ -1,7 +1,6 @@
 <action-encoding>UTF-8</action-encoding>
-
 <library-action name="style_accessors">
-<action-version version="1.2.5">
+<action-version version="1.2.7">
 Style Accessors
  
 Get and set styles on any element, regardless where they were initially defined.
@@ -9,6 +8,7 @@ Get and set styles on any element, regardless where they were initially defined.
 MIT License
 Copyright (c) 2013 Walter Lee Davis
 </action-version>
+
 <action-javascript>
 /**
 * Does this page use a root-based Resources folder?
@@ -103,10 +103,12 @@ if(undefined == FWPage.addOverride){
     if(this.overrideLink) return this.overrideLink;
     var head = fwDocument.fwTags.fwFind('head');
     if(!head) fwAbort('Please call addOverride from fwBeforeEndHead or later.')
-    var link = head.fwAddOpt('link');
-    head.fwAddRawOpt('');
+    var lastLink = head.findLast('link');
+    var link = head.fwAddOpt('link', lastLink);
+    head.fwAddRawOpt('', lastLink);
     var myFile = new FWFile();
-    myFile.fwOpenRead(fwPage.styleOverridePath());
+    myFile.fwOpenWrite(fwPage.styleOverridePath());
+    myFile.fwWrite(fwPage.currentRules);
     myFile.fwClose();
     fwParameters['styleOverride'].fwSpecify(myFile);
     link.rel = fwQuote('stylesheet');
@@ -123,9 +125,8 @@ if(undefined == FWPage.addOverride){
 */
 if(undefined == FWPage.resetOverride){
   FWPage.prototype.resetOverride = function(){
-  	if (this.overrideReset)
-  		return;
-  		
+    if (this.overrideReset)
+      return;
     var myFile = new FWFile();
     myFile.fwOpenWrite(this.styleOverridePath(), true);
     myFile.fwSetEncoding('UTF-8');
@@ -135,23 +136,32 @@ if(undefined == FWPage.resetOverride){
     return myFile;
   };
 }
-  announce = function(){
-    // This function should be called by all Actions using the library, preferably in
-    // fwBeforeStartHTML(), although really any of the callbacks before the callback
-    // calling renounce() is called should be fine
-  	if (!fwPage.style_accessors_use)
-	  	fwPage.style_accessors_use = 1;
-	else
-	  	fwPage.style_accessors_use += 1;
+/**
+* Announce our existence so we only publish a file from the last Action on the page
+* Must be called in fwBeforeStartHTML()
+* @void
+*/
+if(undefined == FWPage.announce){
+  FWPage.prototype.announce = function(){
+    if (!fwPage.style_accessors_use)
+      fwPage.style_accessors_use = 1;
+  else
+      fwPage.style_accessors_use += 1;
   };
-  renounce = function(){
-    // This function should be called by all Actions using the library, preferably in
-    // fwAfterEndHTML(). All the overridden styles will need to have been written prior to the
-    // last call to this function
-  	fwPage.style_accessors_use -= 1;
-  	if (fwPage.style_accessors_use == 0)		// We're the last one...
-  		fwPage.addOverride();
+}
+/**
+* Renounce our existence so the last Action can run addOverride
+* Must be called in fwAfterEndHTML()
+* @void
+*/
+if(undefined == FWPage.renounce){
+  FWPage.prototype.renounce = function(){
+    fwPage.style_accessors_use -= 1;
+    // We're the last one...
+    if (fwPage.style_accessors_use == 0 && fwDocument.fwExternalStylesheets && fwPage.currentRules !== undefined)
+      fwPage.addOverride();
   };
+}
 /**
 * Convert a string of CSS into a hash.
 * @return object JSON of styles
@@ -189,7 +199,7 @@ if(undefined == FWTag.getSelector){
   FWTag.prototype.getSelector = function(){
     if(this.id){
       var id = '#' + this.id.toString().slice(1,-1);
-      if(id.length > 0){
+      if(id.length > 1){
         return id + ', ' + id + '.f-ms';
       }
     }
@@ -199,31 +209,33 @@ if(undefined == FWTag.getSelector){
     }
   };
 }
+if(undefined == FWTag.findLast){
+  FWTag.prototype.findLast = function(type) {
+    var els = this.fwFindAll(type);
+    for(var i = els.length-1; i >= 0; i--)
+    {
+      if(els[i].fwEnclosing != "!--" && !(/ie/i.test(els[i].href)) && !lastEl)
+        var lastEl = els[i];
+    }
+    return lastEl;
+  }
+}
 /**
 * Write CSS into the override sheet.
 * @return void
 */
 if(undefined == FWTag.setOverride){
   FWTag.prototype.setOverride = function(content){
-    fwPage.resetOverride();	// Init the file. resetOverride() ensures this only happens once.
-    var myFile = new FWFile();
-    myFile.fwOpenRead(fwPage.styleOverridePath());
-    var existing = myFile.fwReadString(myFile.fwAvailable);
-    myFile.fwClose();
+  fwPage.currentRules = fwPage.currentRules || "";
     var overwrite = false;
-    var test = this.id ? this.id.toString().slice(1,-1) : fwItem.toString();
-    if(existing && existing.match(test)){
-      var re = new RegExp(this.getSelector() + ' \\{ (.+?) \\}');
-      existing = existing.replace(re, content);
-      content = existing;
+    var selector = this.getSelector();
+    if(new RegExp(selector).test(fwPage.currentRules)){
+      var re = new RegExp(selector + ' \\{ (.+?) \\}');
+      fwPage.currentRules = fwPage.currentRules.replace(re, content);
       overwrite = true;
     }else{
-      content = content + "\n";
+      fwPage.currentRules += content + "\n";
     }
-    myFile.fwOpenWrite(fwPage.styleOverridePath(), overwrite);
-    myFile.fwSetEncoding('UTF-8');
-    myFile.fwWrite(content);
-    myFile.fwClose();
     this.style = null;
   };
 }
@@ -233,13 +245,10 @@ if(undefined == FWTag.setOverride){
 */
 if(undefined == FWTag.getOverride){
   FWTag.prototype.getOverride = function(){
-    var myFile = new FWFile();
-    myFile.fwOpenRead(fwPage.styleOverridePath(), false);
-    var content = myFile.fwReadString(myFile.fwAvailable);
-    myFile.fwClose();
+  var content = fwPage.currentRules || "";
     var re = new RegExp(this.getSelector() + ' \\{ (.+?) \\}');
-    if( null != content.match(re) && content.match(re).length > 0 )
-    return( cssToHash(content.match(re)[1]) );
+    if( re.test(content) )
+      return( cssToHash(content.match(re)[1]) );
     return {};
   };
 }
@@ -300,75 +309,87 @@ if(undefined == FWTag.getAllStyles){
 * @return void
 */
 if(undefined == FWTag.setStyle){
-  FWTag.prototype.setStyle = function(attributeName, value){
-    if(this == null || arguments.length < 2) return;
-    if(typeof value == 'string' && value.toLowerCase() == 'null') value = null;
-    var styles = {}, external = {};
-    var reset = { /* BACKGROUND */ 'background': 'none', 'background-attachment':
-    'scroll', 'background-clip': 'border-box', 'background-color': 'inherit',
-    'background-image': 'none', 'background-origin': 'padding-box',
-    'background-position': '0% 0%', 'background-repeat': 'repeat', 'background-size':
-    'auto', /* BORDERS */ 'border-collapse': 'separate', 'border': 'none',
-    'border-width': '0', 'border-style': 'none', 'border-color': '#000000',
-    'border-width': 'none', /* top */ 'border-top': 'none', 'border-top-color':
-    '#000000', 'border-top-style': 'none', 'border-top-width': '0', /* right */
-    'border-right': 'none', 'border-right-color': '#000000', 'border-right-style':
-    'none', 'border-right-width': '0', /* bottom */ 'border-bottom': 'none',
-    'border-bottom-color': '#000000', 'border-bottom-style': 'none',
-    'border-bottom-width': '0', /* left */ 'border-left': 'none', 'border-left-color':
-    '#000000', 'border-left-style': 'none', 'border-left-width': '0', /* border-image */
-    'border-image': 'none', 'border-image-outset': '0', 'border-image-repeat': 'stretch',
-    'border-image-slice': '100%', 'border-image-source': 'none', 'border-image-width':
-    '1', /* border-radius */ 'border-radius': '0', 'border-top-left-radius': '0',
-    'border-top-right-radius': '0', 'border-bottom-left-radius': '0',
-    'border-bottom-right-radius': '0', /* BOX ATTRIBUTES */ 'height': 'auto',
-    'max-height': 'none', 'min-height': '0', 'width': 'auto', 'max-width': 'none',
-    'min-width': '0', 'position': 'static', 'display': 'block', 'visibility': 'visible',
-    'top': 'auto', 'right': 'auto', 'bottom': 'auto', 'left': 'auto', 'float': 'none',
-    'clear': 'none', 'margin': '0', 'margin-top': '0', 'margin-right': '0',
-    'margin-bottom': '0', 'margin-left': '0', 'padding': '0', 'padding-top': '0',
-    'padding-right': '0', 'padding-bottom': '0', 'padding-left': '0', 'opacity': '1',
-    'overflow': 'visible', 'overflow-x': 'visible', 'overflow-y': 'visible', 'z-index':
-    'auto', 'zoom': '1', 'filter': 'none', 'cursor': 'auto', 'box-shadow': 'none',
-    'box-sizing': 'content-box', /* TEXT */ 'color': 'inherit', 'font': 'inherit',
-    'font-family': 'inherit', 'font-size': '1em', 'font-style': 'inherit',
-    'font-variant': 'inherit', 'font-weight': 'inherit', 'letter-spacing': 'inherit',
-    'line-height': 'inherit', 'list-style-image': 'none', 'list-style-position':
-    'outside', 'list-style-type': 'disc', 'list-style': 'disc', 'text-decoration':
-    'none', 'text-indent': '0', 'text-shadow': 'none', 'vertical-align': 'baseline',
-    'white-space': 'normal' };
-    if(fwPage.fwElementStyle){
-      external = cssToHash(fwPage.fwElementStyle(this));
-    }
-    if(fwDocument.fwExternalStylesheets){
-      styles = this.getOverride();
-    }
-    if(this.style){
-      var inlines = cssToHash(this.style);
-      for(var i in inlines){
-        styles[i] = inlines[i];
+  FWTag.prototype.setStyle = function(){
+    if(this == null || arguments.length == 0) 
+      return;
+    var stylesObj = {};
+    // If we have two strings, objectify them
+    if(arguments.length == 2 && arguments[0].constructor == String)
+      stylesObj[arguments[0]] = arguments[1];
+    else
+      stylesObj = arguments[0];
+    for(var i in stylesObj) {
+      var attributeName = i,
+        value = stylesObj[i];
+      if(typeof value == 'string' && value.toLowerCase() == 'null') 
+        value = null;
+      var styles = {}, external = {};
+      var reset = { /* BACKGROUND */ 'background': 'none', 'background-attachment':
+        'scroll', 'background-clip': 'border-box', 'background-color': 'inherit',
+        'background-image': 'none', 'background-origin': 'padding-box',
+        'background-position': '0% 0%', 'background-repeat': 'repeat', 'background-size':
+        'auto', /* BORDERS */ 'border-collapse': 'separate', 'border': 'none',
+        'border-width': '0', 'border-style': 'none', 'border-color': '#000000',
+        'border-width': 'none', /* top */ 'border-top': 'none', 'border-top-color':
+        '#000000', 'border-top-style': 'none', 'border-top-width': '0', /* right */
+        'border-right': 'none', 'border-right-color': '#000000', 'border-right-style':
+        'none', 'border-right-width': '0', /* bottom */ 'border-bottom': 'none',
+        'border-bottom-color': '#000000', 'border-bottom-style': 'none',
+        'border-bottom-width': '0', /* left */ 'border-left': 'none', 'border-left-color':
+        '#000000', 'border-left-style': 'none', 'border-left-width': '0', /* border-image */
+        'border-image': 'none', 'border-image-outset': '0', 'border-image-repeat': 'stretch',
+        'border-image-slice': '100%', 'border-image-source': 'none', 'border-image-width':
+        '1', /* border-radius */ 'border-radius': '0', 'border-top-left-radius': '0',
+        'border-top-right-radius': '0', 'border-bottom-left-radius': '0',
+        'border-bottom-right-radius': '0', /* BOX ATTRIBUTES */ 'height': 'auto',
+        'max-height': 'none', 'min-height': '0', 'width': 'auto', 'max-width': 'none',
+        'min-width': '0', 'position': 'static', 'display': 'block', 'visibility': 'visible',
+        'top': 'auto', 'right': 'auto', 'bottom': 'auto', 'left': 'auto', 'float': 'none',
+        'clear': 'none', 'margin': '0', 'margin-top': '0', 'margin-right': '0',
+        'margin-bottom': '0', 'margin-left': '0', 'padding': '0', 'padding-top': '0',
+        'padding-right': '0', 'padding-bottom': '0', 'padding-left': '0', 'opacity': '1',
+        'overflow': 'visible', 'overflow-x': 'visible', 'overflow-y': 'visible', 'z-index':
+        'auto', 'zoom': '1', 'filter': 'none', 'cursor': 'auto', 'box-shadow': 'none',
+        'box-sizing': 'content-box', /* TEXT */ 'color': 'inherit', 'font': 'inherit',
+        'font-family': 'inherit', 'font-size': '1em', 'font-style': 'inherit',
+        'font-variant': 'inherit', 'font-weight': 'inherit', 'letter-spacing': 'inherit',
+        'line-height': 'inherit', 'list-style-image': 'none', 'list-style-position':
+        'outside', 'list-style-type': 'disc', 'list-style': 'disc', 'text-decoration':
+        'none', 'text-indent': '0', 'text-shadow': 'none', 'vertical-align': 'baseline',
+        'white-space': 'normal' 
+      };
+      if(fwPage.fwElementStyle){
+        external = cssToHash(fwPage.fwElementStyle(this));
       }
-    }
-    if(value == null){
-      if(reset[attributeName] && external[attributeName]){
-        styles[attributeName] = reset[attributeName];
+      if(fwDocument.fwExternalStylesheets){
+        styles = this.getOverride();
+      }
+      if(this.style){
+        var inlines = cssToHash(this.style);
+        for(var i in inlines){
+          styles[i] = inlines[i];
+        }
+      }
+      if(value == null){
+        if(reset[attributeName] && external[attributeName]){
+          styles[attributeName] = reset[attributeName];
+        }else{
+          delete styles[attributeName];
+        }
       }else{
-        delete styles[attributeName];
+        styles[attributeName] = value;
       }
-    }else{
-      styles[attributeName] = value;
-    }
-    this.style = fwQuote(hashToCSS(styles));
-    if(fwDocument.fwExternalStylesheets){
-      // write styles to override
-      this.setOverride(this.getStyleAsRule());
-      this.style = null;
+      this.style = fwQuote(hashToCSS(styles));
+      if(fwDocument.fwExternalStylesheets){
+        // write styles to override
+        this.setOverride(this.getStyleAsRule());
+        this.style = null;
+      }
     }
   };
 }
 </action-javascript>
 </library-action>
-
 <library-action name="cdn_functions">
 <action-javascript>
 /**
@@ -591,11 +612,12 @@ if(undefined == FWTag.removeClassName){
 
 
 <item-action name="com.wdstudio.responsive_css_menu" title="Responsive CSS Menu">
-<action-version version="1.0">
+<action-version version="1.0.1">
 (c) 2013 Walter Davis Studio and OnRamp Web Design
 </action-version>
 <action-number name="breakpoint" title="Breakpoint" default="480" width="36" />
 <action-label name="breakpoint_units" title=" px" advance="no" />
+<action-text name="page_name" title="Page title" />
 <action-popup name="button_style" title="Button style">
   <value name="button-black" title="Button (black)">
   <value name="button-gray" title="Button (gray)">
@@ -1036,19 +1058,40 @@ Sub Menus
   background-image: url(__button_style__);
   background-repeat: no-repeat;
   background-position: center center;
+  width: 45px;
+  height: 45px;
   __button_position__
-  max-width: 45px;
-  min-height: 45px;
-  height: 100%;
   line-height: 0px;
   font-size: 0px;
   display: none;
   position: relative;
+  top: 0;
+  z-index: 10;
   overflow: hidden;
   background-size: 80%;
 }
+.rcm-page-name {
+  display: none;
+}
 @media only screen and (max-width: __breakpoint__px){
-  .responsive-menu { display: none }
+  .rcm-page-name {
+    display: block;
+    position: absolute;
+    __page_name_positioning__
+    color: __main_color__;
+    font-size: __main_font_size__;
+  }
+  .rcm-page-name {
+    font-size: 120%;
+    padding: 0 1em;
+  }
+  nav {
+    min-height: 45px;
+  }
+  .responsive-menu {
+    display: none;
+    min-height: 45px;
+  }
   .responsive-menu > li {
     width: 100%;
   }
@@ -1059,6 +1102,7 @@ Sub Menus
   }
   .rcm-disclosure {
     display: block;
+    __button_position_small__
   }
   .rcm-disclosure.show + .responsive-menu {
     display: block;
@@ -1238,13 +1282,28 @@ function button_style(){
 }
 function button_position(){
   if(fwParameters['button_position'].fwValue == 'left'){
+    return 'left: 0;';
+  }else{
+    return 'right: 0;';
+  }
+}
+function button_position_small(){
+  if(fwParameters['button_position'].fwValue == 'left'){
     return '';
   }else{
-    return 'margin-left: auto;';
+    return 'float: right;';
   }
 }
 function main_align(){
   return fwParameters['main_align'].fwValue;
+}
+function page_name_positioning(){
+  if(fwParameters['button_position'].fwValue != 'left'){
+    return "left: 0;\n\ttop:.5em;";
+  }else{
+    return "right: 0;\n\ttop:.5em;";
+  }
+  
 }
 function subs_align(){
   return fwParameters['subs_align'].fwValue;
@@ -1282,18 +1341,23 @@ function fwBeforeEndBody(){
     script.src = fwQuote(path);
     script.fwAddRawln();
     body.fwAddRawln();
-    //body.fwAddRawln('<!-- Responsive CSS Menu Beta Version 8 -->');
+    //body.fwAddRawln('<!-- Responsive CSS Menu Beta Version 9 -->');
   }
   var self = fwDocument.fwTags.fwFind(fwItem);
-  if(fwPage.fwHTMLLevel > 5){
-    self.fwTitle = 'nav';
-  }
-  var disclosure = self.fwAddOpt('a', true);
-  disclosure.href = fwQuote('#');
-  disclosure.addClassName('rcm-disclosure');
-  self.setStyle('overflow', 'visible');
-  self.setStyle('background', main_background());
   if(self){
+    if(fwPage.fwHTMLLevel > 5){
+      self.fwTitle = 'nav';
+    }
+    var disclosure = self.fwAddOpt('a', true);
+    if(fwParameters['page_name'].fwValue){
+      var page_name = self.fwAddOpt('span', true);
+      page_name.fwAddRaw(fwParameters['page_name'].fwValue);
+      page_name.addClassName('rcm-page-name');
+    }
+    disclosure.href = fwQuote('#');
+    disclosure.addClassName('rcm-disclosure');
+    self.setStyle('overflow', 'visible');
+    self.setStyle('background', main_background());
     var list = self.fwFind(['ul','dl']);
     if(list){
       self.fwMove(list, disclosure);
@@ -1303,8 +1367,10 @@ function fwBeforeEndBody(){
         list.addClassName('responsive-menu');
       }
     }else{
-      fwAbort('This item must contain a list')
+      fwAbort('This item must contain a list');
     }
+  }else{
+    fwAbort('This Action is not properly applied');
   }
 }
 
