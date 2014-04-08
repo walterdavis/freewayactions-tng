@@ -1,0 +1,129 @@
+<action-encoding>UTF-8</action-encoding>
+<page-action name="com.wdstudio.prefix_free" title="PrefixFree">
+<action-version version="0.1">
+PrefixFree Action
+Walter Davis Studio 2014
+
+PrefixFree allows you to write CSS code without worrying about vendor-specific prefixes. Write the W3-approved syntax, and any variants needed for the current browser will be synthesized at page load.
+</action-version>
+<action-javascript>
+/**
+* Create a CDN link to a JavaScript library. 
+* name: common filename for the library (prototype, scriptaculous, jquery)
+* path: (optional) fully-qualified URL to the CDN-hosted file
+* (path is not needed if you are linking to prototype or scriptaculous)
+* WARNING! changes any existing link in the page to the library to the 
+* one specified in path or defaults
+* returns reference to the script
+*/
+var findOrCreateScriptLink = function(name, path){
+  var head = fwDocument.fwTags.fwFind('head');
+  var script = pageHasLinkToScript(name), load = '';
+  var libs = {
+    'prototype': 'http://ajax.googleapis.com/ajax/libs/prototype/1.7/prototype.js',
+    'scriptaculous': 'http://ajax.googleapis.com/ajax/libs/scriptaculous/1.9/scriptaculous.js'
+  };
+  if(!libs[name]){
+    if(!!path){
+      libs[name] = path;
+    }else{
+      fwAbort('Please provide a URL for “' + name + '”. Publishing cannot continue.');
+    }
+  }
+  if(!script){
+    script = head.fwAdd('script', true);
+    script.fwAddRawOpt('');
+    head.fwAddRawOpt('');
+  }
+  //catch any load variables from scriptaculous
+  if(name == 'scriptaculous' && script.src && script.src.toString().match(/\?load=/)){
+    load = script.src.toString().match(/(\?load=.+?)"/)[1]; //"
+  }
+  //overwrite the path to the script to make it current
+  script.src = fwQuote(libs[name] + load);
+  script.type = fwQuote('text/javascript');
+  script.charset = fwQuote('utf-8');
+  return script;
+}
+
+var pageHasLinkToScript = function(name){
+  var script = false;
+  var scripts = fwDocument.fwTags.fwFindAll('script');
+  for(i in scripts){
+    if(scripts[i].src && scripts[i].src.toString().match(new RegExp(name + '\.js'))){
+      script = scripts[i];
+    }
+  }
+  return script;
+}
+
+function fwBeforeEndHead(){
+  findOrCreateScriptLink('prefixfree.min', 'http://cdnjs.cloudflare.com/ajax/libs/prefixfree/1.0.7/prefixfree.min.js');
+}
+</action-javascript>
+</page-action>
+
+<folder-action name="com.wdstudio.prefix_free" title="PrefixFree">
+<action-version version="0.1">
+PrefixFree Action
+Walter Davis Studio 2014
+
+PrefixFree allows you to write CSS code without worrying about vendor-specific prefixes. Write the W3-approved syntax, and any variants needed for the current browser will be synthesized at page load.
+</action-version>
+<action-javascript>
+/**
+* Create a CDN link to a JavaScript library. 
+* name: common filename for the library (prototype, scriptaculous, jquery)
+* path: (optional) fully-qualified URL to the CDN-hosted file
+* (path is not needed if you are linking to prototype or scriptaculous)
+* WARNING! changes any existing link in the page to the library to the 
+* one specified in path or defaults
+* returns reference to the script
+*/
+var findOrCreateScriptLink = function(name, path){
+  var head = fwDocument.fwTags.fwFind('head');
+  var script = pageHasLinkToScript(name), load = '';
+  var libs = {
+    'prototype': 'http://ajax.googleapis.com/ajax/libs/prototype/1.7/prototype.js',
+    'scriptaculous': 'http://ajax.googleapis.com/ajax/libs/scriptaculous/1.9/scriptaculous.js'
+  };
+  if(!libs[name]){
+    if(!!path){
+      libs[name] = path;
+    }else{
+      fwAbort('Please provide a URL for “' + name + '”. Publishing cannot continue.');
+    }
+  }
+  if(!script){
+    script = head.fwAdd('script', true);
+    script.fwAddRawOpt('');
+    head.fwAddRawOpt('');
+  }
+  //catch any load variables from scriptaculous
+  if(name == 'scriptaculous' && script.src && script.src.toString().match(/\?load=/)){
+    load = script.src.toString().match(/(\?load=.+?)"/)[1]; //"
+  }
+  //overwrite the path to the script to make it current
+  script.src = fwQuote(libs[name] + load);
+  script.type = fwQuote('text/javascript');
+  script.charset = fwQuote('utf-8');
+  return script;
+}
+
+var pageHasLinkToScript = function(name){
+  var script = false;
+  var scripts = fwDocument.fwTags.fwFindAll('script');
+  for(i in scripts){
+    if(scripts[i].src && scripts[i].src.toString().match(new RegExp(name + '\.js'))){
+      script = scripts[i];
+    }
+  }
+  return script;
+}
+
+function fwBeforeEndHead(){
+  findOrCreateScriptLink('prefixfree.min', 'http://cdnjs.cloudflare.com/ajax/libs/prefixfree/1.0.7/prefixfree.min.js');
+}
+</action-javascript>
+</folder-action>
+

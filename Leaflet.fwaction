@@ -1,0 +1,94 @@
+<action-encoding>UTF-8</action-encoding>
+<item-action name="com.wdstudio.leaflet" title="Leaflet">
+<action-version version="0.1">
+Leaflet
+Copyright 2014 Walter Lee Davis
+
+Use the Leaflet OpenStreetMap Library version 0.7
+</action-version>
+<action-text name="Latitude" default="51.826128" />
+<action-text name="Longitude" default="-1.368506" />
+<action-text name="Zoom" default="13" />
+<action-javascript>
+function fwBeforeEndBody(){
+  var body = fwDocument.fwTags.fwFind('body');
+  if(!fwPage.Leaflet){
+    fwPage['Leaflet'] = body.fwAdd('script', true);
+    fwPage.Leaflet['type'] = fwQuote('text/javascript');
+    fwPage.Leaflet['src'] = fwQuote('http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.js');
+    body.fwAddRawln();
+    fwPage.Leaflet.fwAddRawln();
+    var head = fwDocument.fwTags.fwFind('head');
+    var style = head.fwAdd('link');
+    style['rel'] = fwQuote('stylesheet');
+    style['href'] = fwQuote('http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css');
+    head.fwAddRawln();
+  }
+  var map = fwDocument.fwTags.fwFind(fwItem);
+  if(map){
+    var id = 'osm_' + fwItem.toString();
+    var marker = body.fwAdd('', true, fwPage.Leaflet);
+    marker.fwAddRawln();
+    fwItem['script'] = body.fwAdd('script', true, marker);
+    fwItem.script.fwIndent();
+    fwItem.script['type'] = fwQuote('text/javascript');
+    fwItem.script.fwAddRawln();
+    fwItem.script.fwAddRawln('var ' + id + ' = L.map(' + map.id + ').setView([' + [parseFloat(fwParameters['Latitude'].fwValue), parseFloat(fwParameters['Longitude'].fwValue)].toString() + '], ' + parseInt((fwParameters['Zoom'].fwValue * 1), 10) + ');');
+    fwItem.script.fwAddRawln("L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href=\"http://osm.org/copyright\">OpenStreetMap</a> contributors'}).addTo(" + id + ");");
+    fwItem.script.fwOutdent();
+  }
+}
+</action-javascript>
+</item-action>
+
+<action name="com.wdstudio.leaflet_marker" title="LeafletMarker">
+<action-version version="0.1">
+LeafletMarker
+Copyright 2014 Walter Lee Davis
+
+Use the Leaflet OpenStreetMap Library version 0.7
+Add a marker to your Leaflet OpenStreetMap
+</action-version>
+<action-text name="Latitude" default="51.826128" />
+<action-text name="Longitude" default="-1.368506" />
+<action-text name="Marker Text" default="Softpress Systems, Ltd." />
+<action-itemref name="maps" title="Map" filter="choose_map"/>
+
+<action-javascript>
+function choose_map(item){
+  var maps = fwPage.fwFindAllActions(2,'com.wdstudio.leaflet');
+  if(maps) {
+    for( var i in maps){
+      if(item == maps[i].fwItem) return true;
+    }
+  }
+  return false;
+}
+function fwInterface(){
+  if(fwParameters['maps'].fwValue == null){
+    var maps = fwPage.fwFindAllActions(2,'com.wdstudio.leaflet');
+    if(maps) {
+      for( var i in maps){
+        c = maps[i].fwItem;
+        fwParameters['maps'].fwValue = c;
+      }
+    }
+  }
+}
+function fwParameterChanged(){
+  fwInterface();
+}
+function fwAfterEndBody(){
+  var map = fwParameters['maps'].fwValue;
+  var id = 'osm_' + map.toString();
+  if(map && map.script){
+    var script = map.script;
+    script.fwIndent();
+    script.fwAddRawln('L.marker([' + [parseFloat(fwParameters['Latitude'].fwValue), parseFloat(fwParameters['Longitude'].fwValue)].toString() + ']).addTo(' + id + ').bindPopup("' + fwParameters['Marker Text'] + '").openPopup();');
+    script.fwOutdent();
+  }
+  var junk = fwDocument.fwTags.fwFind(fwItem);
+  if(junk) junk.fwDelete();
+}
+</action-javascript>
+</action>
