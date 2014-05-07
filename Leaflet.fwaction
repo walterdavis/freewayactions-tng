@@ -1,15 +1,43 @@
 <action-encoding>UTF-8</action-encoding>
+<library-action name="leaflet_functions" title="LeafletFunctions">
+<action-javascript>
+function search(){
+  var address = fwParameters['address'].fwValue;
+  if(address.length < 1) return;
+  var location = fwShellCommand('curl -d -H "Accept: application/json" "http://nominatim.openstreetmap.org/search?q=' + escape(address) + '&format=json&limit=1"');
+  location = eval(location.toString())[0];
+  if(undefined == location){
+    fwAbort('Could not locate that address');
+  }else{
+    fwParameters['Latitude'].fwValue = location.lat;
+    fwParameters['Longitude'].fwValue = location.lon;
+  }
+}
+function param_safe(string){
+  // first character must be letter or _
+  string = string.replace(/^[^_a-z]/i, '_');
+  // no dots or punctuation in the remaining string
+  string = string.replace(/[^a-z0-9_]+/i, '_');
+  // clean up replacements
+  string = string.replace(/_+/, '_');
+  return string;
+}
+</action-javascript>
+</library-action>
 <item-action name="com.wdstudio.leaflet" title="Leaflet">
-<action-version version="0.1">
+<action-version version="0.3">
 Leaflet
 Copyright 2014 Walter Lee Davis
 
 Use the Leaflet OpenStreetMap Library version 0.7
 </action-version>
-<action-text name="Latitude" default="51.826128" />
-<action-text name="Longitude" default="-1.368506" />
+<action-text name="address" title="Address" />
+<action-button name="geocode" title="Find Coordinates" advance="no" onclick="search()"/>
+<action-text name="Latitude" />
+<action-text name="Longitude" />
 <action-text name="Zoom" default="13" />
 <action-javascript>
+<action-include name="leaflet_functions">
 function fwBeforeEndBody(){
   var body = fwDocument.fwTags.fwFind('body');
   if(!fwPage.Leaflet){
@@ -26,35 +54,52 @@ function fwBeforeEndBody(){
   }
   var map = fwDocument.fwTags.fwFind(fwItem);
   if(map){
-    var id = 'osm_' + fwItem.toString();
+    var id = 'osm_' + param_safe(fwItem.toString());
+    var lat = parseFloat(fwParameters['Latitude'].fwValue);
+    var lng = parseFloat(fwParameters['Longitude'].fwValue);
+    if(isNaN(lat) || isNaN(lng)) fwAbort('Map coordinates are invalid');
     var marker = body.fwAdd('', true, fwPage.Leaflet);
     marker.fwAddRawln();
     fwItem['script'] = body.fwAdd('script', true, marker);
     fwItem.script.fwIndent();
     fwItem.script['type'] = fwQuote('text/javascript');
     fwItem.script.fwAddRawln();
-    fwItem.script.fwAddRawln('var ' + id + ' = L.map(' + map.id + ').setView([' + [parseFloat(fwParameters['Latitude'].fwValue), parseFloat(fwParameters['Longitude'].fwValue)].toString() + '], ' + parseInt((fwParameters['Zoom'].fwValue * 1), 10) + ');');
+    fwItem.script.fwAddRawln('var ' + id + ' = L.map(' + map.id + ').setView([' + [lat, lng].toString() + '], ' + parseInt((fwParameters['Zoom'].fwValue * 1), 10) + ');');
     fwItem.script.fwAddRawln("L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href=\"http://osm.org/copyright\">OpenStreetMap</a> contributors'}).addTo(" + id + ");");
     fwItem.script.fwOutdent();
+    // test for that sneaky 1px font
+    if(fwItem.style && (fwItem.style.match(/font\-size/) || fwItem.style.match(/font:\s*\d/))){
+      // don't worry, somebody else did this
+    }else{
+      // patch this, old-school-style
+      if(!map.style){
+        map['style'] = fwQuote('font-size: inherit !important');
+      }else{
+        map['style'] = fwQuote(map.style.toString().slice(1, -1) + '; font-size: inherit !important');
+      }
+    }
   }
 }
 </action-javascript>
 </item-action>
 
 <action name="com.wdstudio.leaflet_marker" title="LeafletMarker">
-<action-version version="0.1">
+<action-version version="0.2">
 LeafletMarker
 Copyright 2014 Walter Lee Davis
 
 Use the Leaflet OpenStreetMap Library version 0.7
 Add a marker to your Leaflet OpenStreetMap
 </action-version>
-<action-text name="Latitude" default="51.826128" />
-<action-text name="Longitude" default="-1.368506" />
-<action-text name="Marker Text" default="Softpress Systems, Ltd." />
+<action-text name="address" title="Address" />
+<action-button name="geocode" title="Find Coordinates" advance="no" onclick="search()"/>
+<action-text name="Latitude" />
+<action-text name="Longitude" />
+<action-text name="Marker Text" />
 <action-itemref name="maps" title="Map" filter="choose_map"/>
 
 <action-javascript>
+<action-include name="leaflet_functions">
 function choose_map(item){
   var maps = fwPage.fwFindAllActions(2,'com.wdstudio.leaflet');
   if(maps) {
@@ -80,11 +125,15 @@ function fwParameterChanged(){
 }
 function fwAfterEndBody(){
   var map = fwParameters['maps'].fwValue;
-  var id = 'osm_' + map.toString();
+  var lat = parseFloat(fwParameters['Latitude'].fwValue);
+  var lng = parseFloat(fwParameters['Longitude'].fwValue);
+  var marker_text = fwParameters['Marker Text'].fwValue;
+  if(isNaN(lat) || isNaN(lng)) fwAbort('Map coordinates are invalid');
+  var id = 'osm_' + param_safe(map.toString());
   if(map && map.script){
     var script = map.script;
     script.fwIndent();
-    script.fwAddRawln('L.marker([' + [parseFloat(fwParameters['Latitude'].fwValue), parseFloat(fwParameters['Longitude'].fwValue)].toString() + ']).addTo(' + id + ').bindPopup("' + fwParameters['Marker Text'] + '").openPopup();');
+    script.fwAddRawln('L.marker([' + [lat, lng].toString() + ']).addTo(' + id + ').bindPopup("' + marker_text + '").openPopup();');
     script.fwOutdent();
   }
   var junk = fwDocument.fwTags.fwFind(fwItem);
