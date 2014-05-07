@@ -1,18 +1,25 @@
 <action-encoding>UTF-8</action-encoding>
 <item-action name="com.wdstudio.video_background" title="VideoBackground">
 <action-appliesto non-html32 gif jpeg png pass-through />
-<action-version version="0.2">
+<action-version version="0.3">
 VideoBackground
 Copyright 2013 Walter Lee Davis
 
 A simple way to use HTML5 video as a page background.
 </action-version>
+<action-popup name="Use">
+<value name="file" title="Upload files" />
+<value name="url" title="Link to URL" />
+</action-popup>
+<action-url name="mp4_url" title="MPEG-4 (H.264)"/>
 <action-file name="mp4" title="MPEG-4 (H.264)">
 <value type=".mp4" />
 </action-file>
+<action-url name="ogg_url" title="Ogg/Theora"/>
 <action-file name="ogg" title="Ogg/Theora">
 <value type=".ogv" />
 </action-file>
+<action-url name="webm_url" title="WebM"/>
 <action-file name="webm" title="WebM">
 <value type=".webm" />
 </action-file>
@@ -24,6 +31,20 @@ A simple way to use HTML5 video as a page background.
 <![endif]-->
 </action-markup>
 <action-javascript>
+function fwInterface(){
+  var files = 'ogg webm mp4'.split(' ');
+  var urls = 'ogg_url webm_url mp4_url'.split(' ');
+  for (var i = files.length - 1; i >= 0; i--){
+    if(! fwPage[files[i]] ) fwPage[files[i]] = '';
+    fwParameters[files[i]].fwVisible = fwParameters['Use'].fwValue == 'file';
+  };
+  for (var i = urls.length - 1; i >= 0; i--){
+    fwParameters[urls[i]].fwVisible = fwParameters['Use'].fwValue == 'url';
+  };
+}
+function fwParameterChanged(){
+  fwInterface();
+}
 function fwBeforeEndHead(){
   if(fwPage.fwHTMLLevel < 6){
     if(!fwPage.html5){
@@ -51,6 +72,18 @@ function fwBeforeEndHead(){
 function fwBeforeEndBody(){
   var poster = fwDocument.fwTags.fwFind("img",fwItem);
   if(!!poster){
+    var files = 'ogg webm mp4'.split(' ');
+    var urls = 'ogg_url webm_url mp4_url'.split(' ');
+    if(fwParameters['Use'].fwValue == 'url'){
+      for (var i = files.length - 1; i >= 0; i--){
+        fwPage[files[i]] = fwParameters[urls[i]].fwValue;
+      };
+    }else{
+      for (var i = files.length - 1; i >= 0; i--){
+        fwPage[files[i]] = fwParameters[files[i]];
+      };
+    }
+    
     if(!fwPage.videobackground){
       fwPage['videobackground'] = true;
       var theHead = fwDocument.fwTags.fwFind("head");
@@ -97,26 +130,26 @@ function fwBeforeEndBody(){
     video['class'] = fwQuote("videobackground");
     video.fwAddRawOpt("");
     video.fwIndent();
-    if(fwParameters['ogg'].fwHasFile || fwParameters['webm'].fwHasFile)
-    if(fwParameters['ogg'].fwHasFile){
+    if(fwPage['ogg'].fwHasFile || (fwPage['ogg'].toString().length > 4) || fwPage['webm'].fwHasFile || (fwPage['webm'].toString().length > 4))
+    if(fwPage['ogg'].fwHasFile || (fwPage['ogg'].toString().length > 4)){
       var source = video.fwAdd('source', false);
       source.type = fwQuote('video/ogg');
-      source.src = fwQuote(fwParameters['ogg'].toString());
+      source.src = fwQuote(fwPage['ogg'].toString());
       video.fwAddRawOpt("");
     }
-    if(fwParameters['webm'].fwHasFile){
+    if(fwPage['webm'].fwHasFile || (fwPage['webm'].toString().length > 4)){
       var source = video.fwAdd('source', false);
       source.type = fwQuote('video/webm');
-      source.src = fwQuote(fwParameters['webm'].toString());
+      source.src = fwQuote(fwPage['webm'].toString());
       video.fwAddRawOpt("");
     }
   }else{
     fwAbort('You must select either a WebM or Ogg video as a fallback.')
   }
-  if(fwParameters['mp4'].fwHasFile){
+  if(fwPage['mp4'].fwHasFile || (fwPage['mp4'].toString().length > 4)){
     var source = video.fwAdd('source', false);
     source.type = fwQuote('video/mp4');
-    source.src = fwQuote(fwParameters['mp4'].toString());
+    source.src = fwQuote(fwPage['mp4'].toString());
     video.fwAddRawOpt("");
   }else{
     fwAbort('You must select an H.264 MPEG video.')
