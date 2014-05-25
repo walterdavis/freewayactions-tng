@@ -1,6 +1,6 @@
 <action-encoding>UTF-8</action-encoding>
 <item-action name="com.wdstudio.html5_block_link" title="HTML5 Block Link" generates-link>
-<action-version version="0.2">
+<action-version version="0.2.1">
 HTML5 Block Link
 Copyright 2014 Walter Davis Studio
 </action-version>
@@ -25,7 +25,7 @@ function fwBeforeEndBody(){
   var elm = fwDocument.fwTags.fwFind(fwItem);
   if(elm){
     var link = elm.fwAddEnclosing('a', true);
-    link.href = fwQuote(fwParameters['url'].fwValue);
+    link.href = fwQuote(fwParameters['url'].toString());
     var params = 'title target class id'.split(' ');
     for (var i = params.length - 1; i >= 0; i--){
       var param = params[i];
