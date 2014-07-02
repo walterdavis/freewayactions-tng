@@ -42,7 +42,7 @@ function fwBeforeEndHead(){
 </page-action>
 <item-action name="com.wdstudio.html5_element" title="HTML5 Element">
 <action-appliesto non-html32 />
-<action-version version="0.5">
+<action-version version="0.6">
 HTML5 Element
 Copyright 2012 Walter Lee Davis
 + Major help from Tim Plumb 2012
@@ -56,11 +56,14 @@ Convert your page to HTML5
 <![endif]-->
 </action-markup>
 <action-popup name="tag" title="Element">
+  <value name="address" />
   <value name="article" />
   <value name="aside" />
+  <value name="blockquote" />
   <value name="canvas" />
   <value name="datalist" />
   <value name="details" />
+  <value name="fieldset" />
   <value name="figcaption" />
   <value name="figure" />
   <value name="footer" />
@@ -68,6 +71,7 @@ Convert your page to HTML5
   <value name="hgroup" />
   <value name="nav" />
   <value name="output" />
+  <value name="progress" />
   <value name="section" />
 </action-popup>
 <action-text name="data_attribute" title="data-" />
