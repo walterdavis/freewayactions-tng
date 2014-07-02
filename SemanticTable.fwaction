@@ -1,0 +1,50 @@
+<action-encoding>UTF-8</action-encoding>
+<item-action name="com.wdstudio.semantic_table" title="SemanticTable">
+<action-appliesto table />
+<action-version version="0.1">
+TableKit
+Copyright 2014 Walter Lee Davis
+
+Add the thead and tbody elements to a table, optionally strip out inline P tags.
+</action-version>
+<action-checkbox name="strip" title="Strip P tags from table cells" default="no" />
+<action-javascript>
+function fwBeforeEndBody(){
+  var element = fwDocument.fwTags.fwFind("table",fwItem);
+  if(element){
+    var rows = element.fwFindAll('tr');
+    var first = rows.shift();
+    var thead = element.fwAddOpt('thead', true);
+    thead.fwAddRawOpt('');
+    thead.fwIndent();
+    thead.fwMove(first);
+    thead.fwAddRawOpt('');
+    thead.fwOutdent();
+    if(!first.fwFind('th')){
+      var heads = first.fwFindAll('td');
+      for(i in heads){
+        heads[i].fwTitle = 'th';
+      }
+    }
+    var tbody = element.fwAddOpt('tbody', true);
+    tbody.fwAddRawOpt('');
+    tbody.fwIndent();
+    tbody.fwMove(rows);
+    tbody.fwAddRawOpt('');
+    tbody.fwOutdent();
+    var cells = element.fwFindAll(['td','th']);
+    for(i in cells){
+      var cell = cells[i];
+      if(fwParameters['strip'].fwBoolValue && cell.fwFindAll('p').length == 1){
+        var p = cell.fwFind('p');
+        var dummy = p.fwAddEnclosing('', true);
+        var contents = p.fwFindAllContent();
+        dummy.fwMove(contents)
+        p.fwDelete();
+      }
+    }
+  }
+}
+
+</action-javascript>
+</item-action>

@@ -1,0 +1,141 @@
+<action-encoding>UTF-8</action-encoding>
+<item-action name="Random Image 2">
+<action-version version="0.2">
+Random Image 2
+(c)2014 Walter Davis Studio
+Inspired by, but not based on, the original by Softpress and Blue Iceberg.
+</action-version>
+<action-label name="one" title="You may add up to 35 images (and optional links) to the random pool." />
+<action-file name="image_2" title="Image 2" />
+<action-url name="link_2" title="  Link 2" advance="no"/>
+<action-file name="image_3" title="Image 3" />
+<action-url name="link_3" title="  Link 3" advance="no"/>
+<action-file name="image_4" title="Image 4" />
+<action-url name="link_4" title="  Link 4" advance="no"/>
+<action-file name="image_5" title="Image 5" />
+<action-url name="link_5" title="  Link 5" advance="no"/>
+<action-file name="image_6" title="Image 6" />
+<action-url name="link_6" title="  Link 6" advance="no"/>
+<action-file name="image_7" title="Image 7" />
+<action-url name="link_7" title="  Link 7" advance="no"/>
+<action-file name="image_8" title="Image 8" />
+<action-url name="link_8" title="  Link 8" advance="no"/>
+<action-file name="image_9" title="Image 9" />
+<action-url name="link_9" title="  Link 9" advance="no"/>
+<action-file name="image_10" title="Image 10" />
+<action-url name="link_10" title="  Link 10" advance="no"/>
+<action-file name="image_11" title="Image 11" />
+<action-url name="link_11" title="  Link 11" advance="no"/>
+<action-file name="image_12" title="Image 12" />
+<action-url name="link_12" title="  Link 12" advance="no"/>
+<action-file name="image_13" title="Image 13" />
+<action-url name="link_13" title="  Link 13" advance="no"/>
+<action-file name="image_14" title="Image 14" />
+<action-url name="link_14" title="  Link 14" advance="no"/>
+<action-file name="image_15" title="Image 15" />
+<action-url name="link_15" title="  Link 15" advance="no"/>
+<action-file name="image_16" title="Image 16" />
+<action-url name="link_16" title="  Link 16" advance="no"/>
+<action-file name="image_17" title="Image 17" />
+<action-url name="link_17" title="  Link 17" advance="no"/>
+<action-file name="image_18" title="Image 18" />
+<action-url name="link_18" title="  Link 18" advance="no"/>
+<action-file name="image_19" title="Image 19" />
+<action-url name="link_19" title="  Link 19" advance="no"/>
+<action-file name="image_20" title="Image 20" />
+<action-url name="link_20" title="  Link 20" advance="no"/>
+<action-file name="image_21" title="Image 21" />
+<action-url name="link_21" title="  Link 21" advance="no"/>
+<action-file name="image_22" title="Image 22" />
+<action-url name="link_22" title="  Link 22" advance="no"/>
+<action-file name="image_23" title="Image 23" />
+<action-url name="link_23" title="  Link 23" advance="no"/>
+<action-file name="image_24" title="Image 24" />
+<action-url name="link_24" title="  Link 24" advance="no"/>
+<action-file name="image_25" title="Image 25" />
+<action-url name="link_25" title="  Link 25" advance="no"/>
+<action-file name="image_26" title="Image 26" />
+<action-url name="link_26" title="  Link 26" advance="no"/>
+<action-file name="image_27" title="Image 27" />
+<action-url name="link_27" title="  Link 27" advance="no"/>
+<action-file name="image_28" title="Image 28" />
+<action-url name="link_28" title="  Link 28" advance="no"/>
+<action-file name="image_29" title="Image 29" />
+<action-url name="link_29" title="  Link 29" advance="no"/>
+<action-file name="image_30" title="Image 30" />
+<action-url name="link_30" title="  Link 30" advance="no"/>
+<action-file name="image_31" title="Image 31" />
+<action-url name="link_31" title="  Link 31" advance="no"/>
+<action-file name="image_32" title="Image 32" />
+<action-url name="link_32" title="  Link 32" advance="no"/>
+<action-file name="image_33" title="Image 33" />
+<action-url name="link_33" title="  Link 33" advance="no"/>
+<action-file name="image_34" title="Image 34" />
+<action-url name="link_34" title="  Link 34" advance="no"/>
+<action-file name="image_35" title="Image 35" />
+<action-url name="link_35" title="  Link 35" advance="no"/>
+<action-javascript>
+function toJSON(arr) {
+  var parts = [];
+  var is_list = (Object.prototype.toString.apply(arr) === '[object Array]');
+  for(var key in arr) {
+    var value = arr[key];
+    if(typeof value == "object") {
+      if(is_list) parts.push(toJSON(value));
+      else parts.push('"' + key + '":' + toJSON(value));
+    } else {
+      var str = "";
+      if(!is_list) str = '"' + key + '":';
+      if(typeof value == "number") str += value;
+      else if(value === false) str += 'false';
+      else if(value === true) str += 'true';
+      else str += '"' + value + '"';
+      parts.push(str);
+    }
+  }
+  var json = parts.join(",");
+ 
+  if(is_list) return '[' + json + ']';
+  return '{' + json + '}';
+}
+function fwInterface(){
+  for (var i=3; i <= 35; i++) {
+    var previous = (i - 1).toString();
+    fwParameters['image_' + i].fwVisible = fwParameters['image_' + previous].fwHasFile;
+    fwParameters['link_' + i].fwVisible = fwParameters['image_' + i].fwVisible;
+  };
+}
+function fwBeforeEndBody(){
+  var element = fwDocument.fwTags.fwFind(fwItem, 'img');
+  var links = [], images = [], dict = {}, opts = -1;
+  if(!!element){
+    if(undefined === element.id){
+      element.id = fwQuote(fwItem.toString() + '_img');
+    }
+    if(element.fwFindEnclosing('a')){
+      link = element.fwFindEnclosing('a');
+      link.id = fwQuote(element.id + '_link');
+      links[0] = link.href.toString().slice(1,-1);
+    }
+    images[0] = element.src.toString().slice(1,-1);
+    for (var i=2; i <= 35; i++) {
+      var key = i - 1;
+      if(fwParameters['image_' + i].fwHasFile){
+        images[key] = fwParameters['image_' + i].toString();
+        links[key] = fwParameters['link_' + i].toString();
+      }
+    };
+    for (var i=0; i < 35; i++) {
+      if( images[i] ){
+        opts ++;
+        dict[images[i]] = links[i] || "";
+      }
+    };
+    var script = element.fwAdd('script', true, element);
+    script.type = fwQuote('text/javascript');
+    var id = element.id.toString().slice(1,-1);
+    script.fwAddRaw('(function(){var dict = ' + toJSON(dict) + '; var rand = Math.round(Math.random() * ' + opts + '), j = 0; for(var i in dict){ if(j == rand){ var link = document.querySelector("#' + id + '_link"); if(link){ link.href = dict[i]; }; document.querySelector("#' + id + '").src = i; }; j++; };})();');
+  }
+}
+</action-javascript>
+</item-action>
