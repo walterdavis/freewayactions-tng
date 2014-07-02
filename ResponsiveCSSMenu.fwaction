@@ -492,7 +492,7 @@ var findOrCreateScriptLink = function(name, path){
   //overwrite the path to the script to make it current
   script.src = fwQuote(libs[name] + load);
   script.type = fwQuote('text/javascript');
-  script.charset = fwQuote('utf-8');
+  //script.charset = fwQuote('utf-8');
   return script;
 }
  
@@ -612,7 +612,7 @@ if(undefined == FWTag.removeClassName){
 
 
 <item-action name="com.wdstudio.responsive_css_menu" title="Responsive CSS Menu">
-<action-version version="1.0.3">
+<action-version version="1.0.4">
 (c) 2013, 2014 Walter Davis Studio and OnRamp Web Design
 </action-version>
 <action-number name="breakpoint" title="Breakpoint" default="480" width="36" />
@@ -1346,6 +1346,7 @@ function fwBeforeEndBody(){
   var self = fwDocument.fwTags.fwFind(fwItem);
   if(self){
     if(fwPage.fwHTMLLevel > 5){
+      self.role = fwQuote('navigation');
       self.fwTitle = 'nav';
     }
     var disclosure = self.fwAddOpt('a', true);
@@ -1363,7 +1364,7 @@ function fwBeforeEndBody(){
       self.fwMove(list, disclosure);
       if(list['class']) list['class'] = null;
       if(! list.fwFindEnclosing(['li','dt','dd'])){
-        list.role = fwQuote('navigation');
+        //list.role = fwQuote('navigation');
         list.addClassName('responsive-menu');
       }
     }else{
