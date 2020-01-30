@@ -15,8 +15,8 @@ var findOrCreateScriptLink = function(name, path){
   var head = fwDocument.fwTags.fwFind('head');
   var script = pageHasLinkToScript(name), load = '';
   var libs = {
-    'prototype': 'http://ajax.googleapis.com/ajax/libs/prototype/1.7/prototype.js',
-    'scriptaculous': 'http://ajax.googleapis.com/ajax/libs/scriptaculous/1.9/scriptaculous.js'
+    'prototype': 'https://ajax.googleapis.com/ajax/libs/prototype/1.7/prototype.js',
+    'scriptaculous': 'https://ajax.googleapis.com/ajax/libs/scriptaculous/1.9/scriptaculous.js'
   };
   if(!libs[name]){
     if(!!path){
@@ -137,7 +137,8 @@ var removeClassName = function(element, className) {
 </action-javascript>
 </library-action>
 <item-action name="com.wdstudio.carousel2" title="Carousel 2">
-<action-version version="0.1.11">
+<action-version version="0.2.0">
+<action-appliesto html/>
 Carousel 2
 Copyright 2013 Walter Lee Davis
 
@@ -165,10 +166,10 @@ function fwInterface(){
 function fwParameterChanged(){
   fwInterface();
 }
-function fwAfterEndHTML(){
+function fwBeforeEndHTML(){
   addPrototype();
   addScriptaculous('effects');
-  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.11/carousel2.js');
+  findOrCreateScriptLink('carousel2', 'https://dnk2vbhoq39rr.cloudfront.net/carousel2/0.2.0/carousel2.js');
   var box = fwDocument.fwTags.fwFind('div', fwItem);
   if(box){
     addClassName(box, 'carousel_master')
@@ -182,7 +183,8 @@ function fwAfterEndHTML(){
 </action-javascript>
 </item-action>
 <item-action name="com.wdstudio.carousel2_pane" title="Carousel 2 Pane">
-<action-version version="0.1.11">
+<action-appliesto html/>
+<action-version version="0.2.0">
 Carousel 2 Pane
 Copyright 2013 Walter Lee Davis
 
@@ -217,10 +219,10 @@ function fwInterface(){
 function fwParameterChanged(){
   fwInterface();
 }
-function fwAfterEndHTML(){
+function fwBeforeEndHTML(){
   addPrototype();
   addScriptaculous('effects');
-  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.11/carousel2.js');
+  findOrCreateScriptLink('carousel2', 'https://dnk2vbhoq39rr.cloudfront.net/carousel2/0.2.0/carousel2.js');
   var box = fwDocument.fwTags.fwFind('div', fwItem);
   if(box){
     addClassName(box, 'carousel_pane')
@@ -232,7 +234,7 @@ function fwAfterEndHTML(){
 </item-action>
 <item-action name="com.wdstudio.carousel2_button" title="Carousel 2 Button" generates-link>
 <action-appliesto graphic pass-through/>
-<action-version version="0.1.11">
+<action-version version="0.2.0">
 Carousel 2 Button
 Copyright 2013 Walter Lee Davis
 
@@ -271,10 +273,10 @@ function fwInterface(){
 function fwParameterChanged(){
   fwInterface();
 }
-function fwAfterEndHTML(){
+function fwBeforeEndHTML(){
   addPrototype();
   addScriptaculous('effects');
-  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.11/carousel2.js');
+  findOrCreateScriptLink('carousel2', 'https://dnk2vbhoq39rr.cloudfront.net/carousel2/0.2.0/carousel2.js');
   var box = fwDocument.fwTags.fwFind('img', fwItem);
   if(box){
     var link = box.fwFindEnclosing('a');
@@ -289,7 +291,7 @@ function fwAfterEndHTML(){
 </item-action>
 <item-action name="com.wdstudio.carousel2_tab" title="Carousel 2 Tab" generates-link>
 <action-appliesto graphic pass-through/>
-<action-version version="0.1.11">
+<action-version version="0.2.0">
 Carousel 2 Tab
 Copyright 2013 Walter Lee Davis
 
@@ -324,10 +326,10 @@ function fwInterface(){
 function fwParameterChanged(){
   fwInterface();
 }
-function fwAfterEndHTML(){
+function fwBeforeEndHTML(){
   addPrototype();
   addScriptaculous('effects');
-  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.11/carousel2.js');
+  findOrCreateScriptLink('carousel2', 'https://dnk2vbhoq39rr.cloudfront.net/carousel2/0.2.0/carousel2.js');
   var box = fwDocument.fwTags.fwFind('img',fwItem);
   if(box){
     var link = box.fwFindEnclosing('a');
@@ -339,7 +341,7 @@ function fwAfterEndHTML(){
 </action-javascript>
 </item-action>
 <action name="com.wdstudio.carousel2_text_button" title="Carousel 2 Text Button" preview-text="&link_text;" generates-link height=12 width=100>
-<action-version version="0.1.11">
+<action-version version="0.2.0">
 Carousel 2 Text Button
 Copyright 2013 Walter Lee Davis
 
@@ -379,10 +381,10 @@ function fwInterface(){
 function fwParameterChanged(){
   fwInterface();
 }
-function fwAfterEndHTML(){
+function fwBeforeEndHTML(){
   addPrototype();
   addScriptaculous('effects');
-  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.11/carousel2.js');
+  findOrCreateScriptLink('carousel2', 'https://dnk2vbhoq39rr.cloudfront.net/carousel2/0.2.0/carousel2.js');
   var enclosingTag = fwDocument.fwTags.fwFind("",fwItem);
   if (enclosingTag){
     var link = enclosingTag.fwFindEnclosing("a");
@@ -400,7 +402,7 @@ function fwAfterEndHTML(){
 </action-javascript>
 </action>
 <action name="com.wdstudio.carousel2_text_tab" title="Carousel 2 Text Tab" preview-text="&link_text;" generates-link height=12 width=100>
-<action-version version="0.1.11">
+<action-version version="0.2.0">
 Carousel 2 Text Tab
 Copyright 2013 Walter Lee Davis
 
@@ -435,10 +437,10 @@ function fwInterface(){
 function fwParameterChanged(){
   fwInterface();
 }
-function fwAfterEndHTML(){
+function fwBeforeEndHTML(){
   addPrototype();
   addScriptaculous('effects');
-  findOrCreateScriptLink('carousel2', 'http://cdn.freewaypro.com/carousel2/0.1.11/carousel2.js');
+  findOrCreateScriptLink('carousel2', 'https://dnk2vbhoq39rr.cloudfront.net/carousel2/0.2.0/carousel2.js');
   var enclosingTag = fwDocument.fwTags.fwFind("",fwItem);
   if (enclosingTag){
     var link = enclosingTag.fwFindEnclosing("a");

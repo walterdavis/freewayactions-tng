@@ -390,7 +390,7 @@ if(undefined == FWTag.setStyle){
 </library-action>
 <item-action name="com.wdstudio.anonymize" title="Anonymize">
 <action-appliesto non-html32 />
-<action-version version="0.2.2">
+<action-version version="0.2.3">
 Anonymize
 Copyright 2013 Walter Lee Davis
 
@@ -402,7 +402,7 @@ Make an element repeatable without ID clashes.
 <action-include name="style_accessors">
 
 function fwBeforeEndBody(){
-  var element = fwDocument.fwTags.fwFind(['div','article','section','aside','header','footer', 'nav', 'address'],fwItem);
+  var element = fwDocument.fwTags.fwFind(['div','article','section','aside','header','footer', 'nav', 'address', 'img'],fwItem);
   if(!!element){
     var id = element.id.toString().slice(1,-1);
     element.addClassName(id);

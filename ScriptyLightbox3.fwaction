@@ -147,7 +147,7 @@ if(undefined == FWTag.removeClassName){
 </library-action>
 <item-action name="com.wdstudio.scripty_lightbox_3" title="ScriptyLightbox3">
 <action-appliesto graphic pass-through/>
-<action-version version="0.3.0">
+<action-version version="0.4.0">
 ScriptyLightbox3
 Copyright 2013 Walter Lee Davis
 
@@ -194,8 +194,8 @@ function fwInterface(){
 }
 function fwBeforeEndHead(){
   addPrototype();
-  findOrCreateScriptLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.3.0/scripty_lightbox_3.js');
-  findOrCreateStyleLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.3.0/scripty_lightbox_3.css');
+  findOrCreateScriptLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.4.0/scripty_lightbox_3.js');
+  findOrCreateStyleLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.4.0/scripty_lightbox_3.css');
 }
 function fwBeforeEndBody(){
   var borderColor = fwParameters['borderColor'].fwValue.fwHex;
@@ -233,7 +233,7 @@ function fwBeforeEndBody(){
 </action-javascript>
 </item-action>
 <action name="com.wdstudio.scripty_lightbox_3" title="ScriptyLightbox3" preview-text="&Text;" generates-link height="12" width="100">
-<action-version version="0.3.0">
+<action-version version="0.4.0">
 ScriptyLightbox3
 Copyright 2013 Walter Lee Davis
 
@@ -281,8 +281,8 @@ function fwInterface(){
 }
 function fwBeforeEndBody(){
   addPrototype();
-  findOrCreateScriptLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.3.0/scripty_lightbox_3.js');
-  findOrCreateStyleLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.3.0/scripty_lightbox_3.css');
+  findOrCreateScriptLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.4.0/scripty_lightbox_3.js');
+  findOrCreateStyleLink('scripty_lightbox_3', 'http://cdn.freewaypro.com/scripty_lightbox_3/0.4.0/scripty_lightbox_3.css');
   var borderColor = fwParameters['borderColor'].fwValue.fwHex;
   if(borderColor != undefined){
     borderColor = '#' + borderColor;

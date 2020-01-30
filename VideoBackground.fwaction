@@ -1,9 +1,9 @@
 <action-encoding>UTF-8</action-encoding>
 <item-action name="com.wdstudio.video_background" title="VideoBackground">
 <action-appliesto non-html32 gif jpeg png pass-through />
-<action-version version="0.3">
+<action-version version="0.4">
 VideoBackground
-Copyright 2013 Walter Lee Davis
+Copyright 2013, 2014 Walter Lee Davis
 
 A simple way to use HTML5 video as a page background.
 </action-version>
@@ -105,6 +105,19 @@ function fwBeforeEndBody(){
       css.fwAddRawln('  min-width: 100%;');
       css.fwAddRawln('  min-height: 100%;');
       css.fwAddRawln('}');
+      var body = fwDocument.fwTags.fwFind('body');
+      body.fwAddRawOpt()
+      var script = body.fwAdd('script', true);
+      script.type = fwQuote('text/javascript');
+      script.fwAddRawln('');
+      script.fwAddRawln('var device = navigator.userAgent.toString().toLowerCase();');
+      script.fwAddRawln('if(device.match(/mobile|blackberry|android/)){');
+      script.fwAddRawln('  var vb = document.querySelector("video.videobackground");');
+      script.fwAddRawln('  var img = document.querySelector("video.videobackground img");');
+      script.fwAddRawln('  vb.parentNode.appendChild(img.parentNode.removeChild(img));');
+      script.fwAddRawln('  img.className="videobackground";');
+      script.fwAddRawln('  vb.parentNode.removeChild(vb);');
+      script.fwAddRawln('}')
     }else{
       fwAbort('Please only add one video background per page.')
     }

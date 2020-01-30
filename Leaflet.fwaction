@@ -4,7 +4,7 @@
 function search(){
   var address = fwParameters['address'].fwValue;
   if(address.length < 1) return;
-  var location = fwShellCommand('curl -d -H "Accept: application/json" "http://nominatim.openstreetmap.org/search?q=' + escape(address) + '&format=json&limit=1"');
+  var location = fwShellCommand('curl -d -H "Accept: application/json" "https://nominatim.openstreetmap.org/search?q=' + escape(address) + '&format=json&limit=1"');
   location = eval(location.toString())[0];
   if(undefined == location){
     fwAbort('Could not locate that address');
@@ -25,9 +25,9 @@ function param_safe(string){
 </action-javascript>
 </library-action>
 <item-action name="com.wdstudio.leaflet" title="Leaflet">
-<action-version version="0.3">
+<action-version version="1.0.0">
 Leaflet
-Copyright 2014 Walter Lee Davis
+Copyright 2014, 2018 Walter Lee Davis
 
 Use the Leaflet OpenStreetMap Library version 0.7
 </action-version>
@@ -43,13 +43,13 @@ function fwBeforeEndBody(){
   if(!fwPage.Leaflet){
     fwPage['Leaflet'] = body.fwAdd('script', true);
     fwPage.Leaflet['type'] = fwQuote('text/javascript');
-    fwPage.Leaflet['src'] = fwQuote('http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.js');
+    fwPage.Leaflet['src'] = fwQuote('https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.js');
     body.fwAddRawln();
     fwPage.Leaflet.fwAddRawln();
     var head = fwDocument.fwTags.fwFind('head');
     var style = head.fwAdd('link');
     style['rel'] = fwQuote('stylesheet');
-    style['href'] = fwQuote('http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css');
+    style['href'] = fwQuote('https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.css');
     head.fwAddRawln();
   }
   var map = fwDocument.fwTags.fwFind(fwItem);
@@ -65,7 +65,7 @@ function fwBeforeEndBody(){
     fwItem.script['type'] = fwQuote('text/javascript');
     fwItem.script.fwAddRawln();
     fwItem.script.fwAddRawln('var ' + id + ' = L.map(' + map.id + ').setView([' + [lat, lng].toString() + '], ' + parseInt((fwParameters['Zoom'].fwValue * 1), 10) + ');');
-    fwItem.script.fwAddRawln("L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href=\"http://osm.org/copyright\">OpenStreetMap</a> contributors'}).addTo(" + id + ");");
+    fwItem.script.fwAddRawln("L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href=\"https://osm.org/copyright\">OpenStreetMap</a> contributors'}).addTo(" + id + ");");
     fwItem.script.fwOutdent();
     // test for that sneaky 1px font
     if(fwItem.style && (fwItem.style.match(/font\-size/) || fwItem.style.match(/font:\s*\d/))){

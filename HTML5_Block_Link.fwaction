@@ -1,6 +1,6 @@
 <action-encoding>UTF-8</action-encoding>
 <item-action name="com.wdstudio.html5_block_link" title="HTML5 Block Link" generates-link>
-<action-version version="0.2.1">
+<action-version version="0.2.3">
 HTML5 Block Link
 Copyright 2014 Walter Davis Studio
 </action-version>
@@ -10,9 +10,30 @@ Copyright 2014 Walter Davis Studio
 <action-text name="target" title="Target" />
 <action-text name="id" title="ID" />
 <action-text name="class" title="Class" />
+<action-text name="data_attribute_0" title="data-" />
+<action-text name="data_value_0" title="=" advance="no" />
+<action-button name="data_clear_0" title="x" advance="no" width="25" onclick="clearParam(0)" />
+<action-text name="data_attribute_1" title="data-" />
+<action-text name="data_value_1" title="=" advance="no" />
+<action-button name="data_clear_1" title="x" advance="no" width="25" onclick="clearParam(1)" />
+<action-text name="data_attribute_2" title="data-" />
+<action-text name="data_value_2" title="=" advance="no" />
+<action-button name="data_clear_2" title="x" advance="no" width="25" onclick="clearParam(2)" />
+<action-text name="data_attribute_3" title="data-" />
+<action-text name="data_value_3" title="=" advance="no" />
+<action-button name="data_clear_3" title="x" advance="no" width="25" onclick="clearParam(3)" />
+<action-text name="data_attribute_4" title="data-" />
+<action-text name="data_value_4" title="=" advance="no" />
+<action-button name="data_clear_4" title="x" advance="no" width="25" onclick="clearParam(4)" />
 <action-javascript>
+function clearParam(num){
+  var attribute = 'data_attribute_' + num.toString();
+  var value = 'data_value_' + num.toString();
+  fwParameters[attribute].fwValue = fwParameters[value].fwValue = '';
+}
+
 function fwInterface(){
-  var params = 'title target class id'.split(' ');
+  var params = 'title target class id data_attribute_0 data_value_0 data_clear_0 data_attribute_1 data_value_1 data_clear_1 data_attribute_2 data_value_2 data_clear_2 data_attribute_3 data_value_3 data_clear_3 data_attribute_4 data_value_4 data_clear_4'.split(' ');
   for (var i = params.length - 1; i >= 0; i--){
     var param = params[i];
     if(!!fwParameters[param].fwValue){
@@ -33,7 +54,20 @@ function fwBeforeEndBody(){
         link[param] = fwQuote(fwParameters[param].fwValue);
       }
     };
+    for (var i = 0; i < 5; i++) {
+      var attribute = 'data_attribute_' + i.toString();
+      var value = 'data_value_' + i.toString();
+      if(!!fwParameters[attribute].fwValue){
+        var param = 'data-' + fwParameters[attribute].fwValue
+        link[param] = fwQuote(fwParameters[value].fwValue);
+      }
+    }
   }
 }
+function fwParameterChanged(){
+  //make the interface visibility "live" to parameter changes
+  fwInterface();
+}
+
 </action-javascript>
 </item-action>
