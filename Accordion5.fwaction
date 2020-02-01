@@ -1,31 +1,284 @@
 <action-encoding>UTF-8</action-encoding>
 <page-action name="com.wdstudio.accordion5_page" title="Accordion5 Page">
 <action-appliesto html5 />
-<action-version version="0.1.0">
+<action-version version="0.3.0">
 Accordion5 Page
 Copyright 2020 Walter Lee Davis
 
 Build a dependency-free HTML5 Accordion.
 </action-version>
-<action-markup custom name="polyfill">
-<script></script>
+<action-markup custom name="scroll_to">
+<script>
+(function() {
+  function getTop(el){
+    var y= 0;
+    while(el) {
+      y+=(el.offsetTop-el.scrollTop+el.clientTop);
+      el=el.offsetParent;
+    }
+    return y
+  }
+  var tops = document.querySelectorAll('details.accordion-fold');
+  Array.prototype.forEach.call(tops, function(elm, i){
+    elm.addEventListener('click', function(e){
+      setTimeout(function(){
+        window.scrollTo(0, getTop(elm))
+      },6)
+    });
+  });
+})();
+</script>
 </action-markup>
+<action-markup custom name="exclusive">
+<script>
+(function() {
+  var exclusives = document.querySelectorAll('details.exclusive');
+  Array.prototype.forEach.call(exclusives, function(elm, i){
+    elm.addEventListener('click', function(e){
+      var peers = document.querySelectorAll('details.exclusive');
+      Array.prototype.forEach.call(peers, function(el, i){
+        if(el != elm) el.open = false;
+      });
+    }, false);
+  });
+})();
+</script>
+</action-markup>
+<action-markup custom name="polyfill">
+<script>
+/*
+Details Element Polyfill 2.4.0
+Copyright © 2019 Javan Makhmali
+ */
+(function() {
+  "use strict";
+  var element = document.createElement("details");
+  var elementIsNative = typeof HTMLDetailsElement != "undefined" && element instanceof HTMLDetailsElement;
+  var support = {
+    open: "open" in element || elementIsNative,
+    toggle: "ontoggle" in element
+  };
+  var styles = '\ndetails, summary {\n  display: block;\n}\ndetails:not([open]) > *:not(summary) {\n  display: none;\n}\nsummary::before {\n  content: "►";\n  padding-right: 0.3rem;\n  font-size: 0.6rem;\n  cursor: default;\n}\n[open] > summary::before {\n  content: "▼";\n}\n';
+  var _ref = [], forEach = _ref.forEach, slice = _ref.slice;
+  if (!support.open) {
+    polyfillStyles();
+    polyfillProperties();
+    polyfillToggle();
+    polyfillAccessibility();
+  }
+  if (support.open && !support.toggle) {
+    polyfillToggleEvent();
+  }
+  function polyfillStyles() {
+    document.head.insertAdjacentHTML("afterbegin", "<style>" + styles + "</style>");
+  }
+  function polyfillProperties() {
+    var prototype = document.createElement("details").constructor.prototype;
+    var setAttribute = prototype.setAttribute, removeAttribute = prototype.removeAttribute;
+    var open = Object.getOwnPropertyDescriptor(prototype, "open");
+    Object.defineProperties(prototype, {
+      open: {
+        get: function get() {
+          if (this.tagName == "DETAILS") {
+            return this.hasAttribute("open");
+          } else {
+            if (open && open.get) {
+              return open.get.call(this);
+            }
+          }
+        },
+        set: function set(value) {
+          if (this.tagName == "DETAILS") {
+            return value ? this.setAttribute("open", "") : this.removeAttribute("open");
+          } else {
+            if (open && open.set) {
+              return open.set.call(this, value);
+            }
+          }
+        }
+      },
+      setAttribute: {
+        value: function value(name, _value) {
+          var _this = this;
+          var call = function call() {
+            return setAttribute.call(_this, name, _value);
+          };
+          if (name == "open" && this.tagName == "DETAILS") {
+            var wasOpen = this.hasAttribute("open");
+            var result = call();
+            if (!wasOpen) {
+              var summary = this.querySelector("summary");
+              if (summary) summary.setAttribute("aria-expanded", true);
+              triggerToggle(this);
+            }
+            return result;
+          }
+          return call();
+        }
+      },
+      removeAttribute: {
+        value: function value(name) {
+          var _this2 = this;
+          var call = function call() {
+            return removeAttribute.call(_this2, name);
+          };
+          if (name == "open" && this.tagName == "DETAILS") {
+            var wasOpen = this.hasAttribute("open");
+            var result = call();
+            if (wasOpen) {
+              var summary = this.querySelector("summary");
+              if (summary) summary.setAttribute("aria-expanded", false);
+              triggerToggle(this);
+            }
+            return result;
+          }
+          return call();
+        }
+      }
+    });
+  }
+  function polyfillToggle() {
+    onTogglingTrigger(function(element) {
+      element.hasAttribute("open") ? element.removeAttribute("open") : element.setAttribute("open", "");
+    });
+  }
+  function polyfillToggleEvent() {
+    if (window.MutationObserver) {
+      new MutationObserver(function(mutations) {
+        forEach.call(mutations, function(mutation) {
+          var target = mutation.target, attributeName = mutation.attributeName;
+          if (target.tagName == "DETAILS" && attributeName == "open") {
+            triggerToggle(target);
+          }
+        });
+      }).observe(document.documentElement, {
+        attributes: true,
+        subtree: true
+      });
+    } else {
+      onTogglingTrigger(function(element) {
+        var wasOpen = element.getAttribute("open");
+        setTimeout(function() {
+          var isOpen = element.getAttribute("open");
+          if (wasOpen != isOpen) {
+            triggerToggle(element);
+          }
+        }, 1);
+      });
+    }
+  }
+  function polyfillAccessibility() {
+    setAccessibilityAttributes(document);
+    if (window.MutationObserver) {
+      new MutationObserver(function(mutations) {
+        forEach.call(mutations, function(mutation) {
+          forEach.call(mutation.addedNodes, setAccessibilityAttributes);
+        });
+      }).observe(document.documentElement, {
+        subtree: true,
+        childList: true
+      });
+    } else {
+      document.addEventListener("DOMNodeInserted", function(event) {
+        setAccessibilityAttributes(event.target);
+      });
+    }
+  }
+  function setAccessibilityAttributes(root) {
+    findElementsWithTagName(root, "SUMMARY").forEach(function(summary) {
+      var details = findClosestElementWithTagName(summary, "DETAILS");
+      summary.setAttribute("aria-expanded", details.hasAttribute("open"));
+      if (!summary.hasAttribute("tabindex")) summary.setAttribute("tabindex", "0");
+      if (!summary.hasAttribute("role")) summary.setAttribute("role", "button");
+    });
+  }
+  function eventIsSignificant(event) {
+    return !(event.defaultPrevented || event.ctrlKey || event.metaKey || event.shiftKey || event.target.isContentEditable);
+  }
+  function onTogglingTrigger(callback) {
+    addEventListener("click", function(event) {
+      if (eventIsSignificant(event)) {
+        if (event.which <= 1) {
+          var element = findClosestElementWithTagName(event.target, "SUMMARY");
+          if (element && element.parentNode && element.parentNode.tagName == "DETAILS") {
+            callback(element.parentNode);
+          }
+        }
+      }
+    }, false);
+    addEventListener("keydown", function(event) {
+      if (eventIsSignificant(event)) {
+        if (event.keyCode == 13 || event.keyCode == 32) {
+          var element = findClosestElementWithTagName(event.target, "SUMMARY");
+          if (element && element.parentNode && element.parentNode.tagName == "DETAILS") {
+            callback(element.parentNode);
+            event.preventDefault();
+          }
+        }
+      }
+    }, false);
+  }
+  function triggerToggle(element) {
+    var event = document.createEvent("Event");
+    event.initEvent("toggle", false, false);
+    element.dispatchEvent(event);
+  }
+  function findElementsWithTagName(root, tagName) {
+    return (root.tagName == tagName ? [ root ] : []).concat(typeof root.getElementsByTagName == "function" ? slice.call(root.getElementsByTagName(tagName)) : []);
+  }
+  function findClosestElementWithTagName(element, tagName) {
+    if (typeof element.closest == "function") {
+      return element.closest(tagName);
+    } else {
+      while (element) {
+        if (element.tagName == tagName) {
+          return element;
+        } else {
+          element = element.parentNode;
+        }
+      }
+    }
+  }
+})();
+</script>
+</action-markup>
+<action-checkbox name="use_polyfill" title="Apply IE polyfill to page" default="no" />
+<action-checkbox name="exclusive_mode" title="Only one answer open at a time" default="no" />
+<action-checkbox name="scroll_mode" title="Scroll into view" default="no" />
+
 <action-javascript>
-function fwBeforeEndHead(){
+function fwBeforeEndBody(){
   if(!fwPage.polyfilled && fwParameters['use_polyfill'].fwBoolValue){
     fwPage['polyfilled'] = true;
-    var theHead = fwDocument.fwTags.fwFind("head");
+    var theBody = fwDocument.fwTags.fwFind("body");
     var theMarkup = fwMarkups['polyfill'];
     theMarkup = theMarkup.toString();
     theMarkup.fwConvertLineEndings = true;
-    theHead.fwAddRawln(theMarkup);
+    theBody.fwAddRawln(theMarkup);
+  }
+  if(!fwPage.exclusived && fwParameters['exclusive_mode'].fwBoolValue){
+    fwPage['exclusived'] = true;
+    var theBody = fwDocument.fwTags.fwFind("body");
+    var theMarkup = fwMarkups['exclusive'];
+    theMarkup = theMarkup.toString();
+    theMarkup.fwConvertLineEndings = true;
+    theBody.fwAddRawln(theMarkup);
+  }
+  if(!fwPage.scrolled && fwParameters['scroll_mode'].fwBoolValue){
+    fwPage['scrolled'] = true;
+    var theBody = fwDocument.fwTags.fwFind("body");
+    var theMarkup = fwMarkups['scroll_to'];
+    theMarkup = theMarkup.toString();
+    theMarkup.fwConvertLineEndings = true;
+    theBody.fwAddRawln(theMarkup);
   }
 }
 </action-javascript>
 </page-action>
+
 <item-action name="com.wdstudio.accordion5_element" title="Accordion5 Element">
 <action-appliesto html5 />
-<action-version version="0.1.0">
+<action-version version="0.3.0">
 Accordion5 Element
 Copyright 2020 Walter Lee Davis
 
@@ -38,21 +291,48 @@ Convert an inline element to an HTML5 Accordion.
 </action-popup>
 
 <action-javascript>
+if(!'test'.strip) String.prototype.strip = function() {
+	return this.replace(/^\s+/, '').replace(/\s+$/, '');
+};
+
+var hasClassName = function(element, className) {
+	className = fwQuote(className,'','"'); //"
+	var elementClassName = (element["class"]) ? fwQuote(element["class"],'','"') : ''; //"
+	return ((elementClassName.length > 0) && (elementClassName == className || new RegExp("\\b" + className + "\\b").test(elementClassName)));
+};
+
+var addClassName = function(element, className) {
+	className = fwQuote(className,'','"'); //"
+	if (!hasClassName(element,className)){
+		var elementClassName = (element["class"]) ? fwQuote(element["class"],'','"') : ''; //"
+		var out = (elementClassName + ' ' + className).strip();
+		return element["class"] = fwQuote(out);
+	}
+};
+
+var removeClassName = function(element, className) {
+	var className = fwQuote(className,'','"');//"
+	var elementClassName = (element['class']) ? fwQuote(element['class'],'','"') : '';//"
+	elementClassName = elementClassName.replace(
+		new RegExp("(^|\\s+)" + className + "(\\s+|$)"), ' ').strip();
+	return element['class'] = (elementClassName.length > 0) ? fwQuote(elementClassName) : null;
+};
+
 function fwBeforeEndBody(){
-  var element = fwDocument.fwTags.fwFind("div",fwItem);
-  if(!!element){
-    // if(fwParameters.tag.fwValue == 'datalist'){
-    //   element.style = null;
-    //   element['class'] = null;
-    //   var options = element.fwFindAll('p');
-    //   for (var i=0; i < options.length; i++) {
-    //     options[i].fwTitle = 'option';
-    //     options[i]['class'] = null;
-    //   };
-    // }
-    element.fwTitle = 'details';
-    var question = element.fwFind(fwParameters['tag'].fwValue);
-    question.fwTitle = 'summary'
+  var parent_element = fwDocument.fwTags.fwFind("div",fwItem);
+  if(!!parent_element){
+    addClassName(parent_element, 'accordion-bellows');
+    var options = parent_element.fwFindAll('div');
+    for (var i=0; i < options.length; i++) {
+      var element = options[i];
+      addClassName(element, 'accordion-fold');
+      if(fwPage['exclusived']){
+        addClassName(element, 'exclusive');
+      }
+      element.fwTitle = 'details';
+      var question = element.fwFind(fwParameters['tag'].fwValue);
+      question.fwTitle = 'summary'
+    }
   }
 }
 
