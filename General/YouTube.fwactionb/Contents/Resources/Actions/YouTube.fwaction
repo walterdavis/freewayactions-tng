@@ -1,0 +1,1128 @@
+<action-encoding>UTF-8</action-encoding>
+<action-version version="2.0.2">
+YouTube Action
+Softpress 2006, 2011
+</action-version>
+
+<action name="com.softpress.youtube" title="YouTube">
+<action-text name="key" title="Movie URL" required help-tag="Enter the YouTube movie URL or movie number." />
+<action-popup name="version" title="YouTube Player">
+	<value name="iFrame" title="iFrame" default>
+	<value name="3" title="Version 3 (Embedded Flash)">
+	<value name="2" title="Version 2 (old)">
+</action-popup>
+<action-checkbox name="widescreen" title="16:9 Aspect Ratio" default="no">
+<action-checkbox name="autoplay" title="Autoplay" default="yes">
+<action-checkbox name="controls" title="Show controls" default="yes">
+<action-checkbox name="autohide" title="Automatically hide controller" default="yes">
+<action-checkbox name="related" title="Show related videos" default="yes">
+<action-checkbox name="hd" title="Play High Definition Alternative" default="no">
+<action-checkbox name="showinfo" title="Show Information" default="yes">
+<action-checkbox name="showannotations" title="Show Annotations" default="yes">
+<action-checkbox name="fs" title="Full Screen Button" default="no">
+<action-number name="start" title="Start Position" default="0" minimum=0 real-numbers width=32>
+<action-label name="l2" title="seconds" advance="no">
+<action-checkbox name="loop" title="Loop" default="no">
+<action-checkbox name="disablekb" title="Disable keyboard controls" default="no">
+
+<action-label name="l1" title="Chrome & Styling">
+<action-checkbox name="border" title="Border" default="no">
+<action-color name="color1" title="Colour 1" default="none">
+<action-color name="color2" title="Colour 2" default="none">
+
+<action-file name="Eolas" var>
+
+<action-markup custom name="movie">
+<script type="text/javascript">
+	//<![CDATA[
+	FW_WriteObject("http://www.youtube.com/v/_id__version__parameters_", "_width_", "_height_", "", "false", "flash" , "MovingItem", "", "loop", "true", "play", "true", "quality", "autohigh" _moreparams_);
+	//]]>
+</script>
+</action-markup>
+
+<action-markup custom name="iframe">http://www.youtube.com/embed/_id_?enablejsapi=1_parameters_</action-markup>
+
+<action-markup custom name="Preview2">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- width="__WIDTH__" height="__HEIGHT__" -->
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=ISO-8859-1">
+<title>menu</title>
+<style type="text/css">
+<!-- 
+body { margin:0px; height:100% }
+html { height:100% }
+
+#youTube {
+position:relative;
+width:_myWidth_px;
+height:_myHeight_px;
+overflow:visible;
+padding:_padding_px;
+background-color:#000;
+_grad_
+}
+
+#moviedisplay {
+position:absolute;
+left:_padding_px;
+top:_padding_px;
+right:_padding_px;
+bottom:25px;
+z-index:1;
+background-color:#000;
+background-image:url('file://_path_/YouTube-Play-Icon.png');
+background-repeat:no-repeat;
+background-position:center;
+font-size:1px;
+_border_
+}
+
+#controller {
+position:absolute;
+left:_padding_px;
+width:_myWidth_px;
+height:25px;
+bottom:_padding_px;
+z-index:2;
+background-color:#bcbcbc;
+font-size:1px;
+background-image:url('file://_path_/Time-Line.png');
+background-repeat:repeat-x;
+background-position:left top;
+background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#ffffff), to(#bcbcbb) );
+}
+
+.controllerView {
+visibility: _controllerview_;
+}
+
+#leftItems {
+position:relative;
+float:left;
+width:82px;
+height:25px;
+background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#ffffff), to(#bcbcbb) );
+font-size:1px;
+
+}
+
+#rightItems {
+position:relative;
+float:right;
+width:180px;
+height:25px;
+background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#ffffff), to(#bcbcbb) );
+font-size:1px
+}
+
+#middleBit {
+position:relative;
+height:25px;
+overflow:hidden;
+font-size:1px
+}
+
+.divider {
+background-color: #bcbcbc;
+border-right: 1px solid rgba(255,255,255,0.8);
+height:25px;
+position:absolute;
+top:0px;
+width:1px;
+font-size:1px;
+}
+
+.errorbox {
+background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#ffffff), to(#cccccc) );
+width:100;
+position:absolute;
+top:0px;
+left:0px;
+width:100%;
+font-size:12px;
+z-index:200;
+visibility:_errorvisible_;
+}
+
+.text {
+font-family:Verdana,Arial,Helvetica,sans-serif;
+font-size:11px;
+}
+
+.highlight {
+position:absolute;
+background-color:#ffffff;
+left:1px;
+top:1px;
+z-index:190;
+font-size:1px;
+opacity: 0.6;
+_visibility_
+}
+
+-->
+</style>
+</head>
+<body>
+<div id="PageDiv" style="position:relative; min-height:100%; background-color:#bcbcbc;">
+	<div id="youTube">
+		<div id="moviedisplay" class="f-x2">
+		</div>
+		<div id="controller" class="controllerView">
+			<div id="leftItems" class="f-x3">
+			<img src="file://_path_/Left-Controller-Stuff.png" width="82" height="25">
+				<div id="split1" class="divider" style="left:32px;">
+				</div>
+			</div>
+			<div id="rightItems" class="f-x3">
+			<img src="file://_path_/right-controller-Stuff.png" width="180" height="25">
+				<div id="split2" class="divider" style="right:34px;">
+				</div>
+				<div id="split3" class="divider" style="right:90px;">
+				</div>
+				<div id="split4" class="divider" style="right:120px;">
+				</div>
+			</div>
+			<div id="middleBit" class="f-x3">
+			<img src="file://_path_/Time-Line.png" width="100%" height="25">
+			</div>
+		</div>
+		
+		<div class="highlight" style="width:100%; height:1px;"></div>
+		<div class="highlight" style="width:1px; height:100%;"></div>
+		
+		<div class="errorbox">
+		<p class="text"><img src="file://_path_/warningtriangle.png" width="56" height="51" style="float:left">_errorMessage_</p>
+		</div>
+		
+	</div>
+
+
+</div>
+</body>
+</html>
+</action-markup>
+
+<action-markup custom name="Preview3">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- width="__WIDTH__" height="__HEIGHT__" -->
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=ISO-8859-1">
+<title>menu</title>
+<style type="text/css">
+<!-- 
+body { margin:0px; height:100% }
+html { height:100% }
+
+#youTube {
+position:relative;
+width:_myWidth_px;
+height:_myHeight_px;
+overflow:visible;
+padding:_padding_px;
+background-color:#000;
+_grad_
+}
+
+#moviedisplay {
+position:absolute;
+left:_padding_px;
+top:_padding_px;
+right:_padding_px;
+bottom:25px;
+z-index:1;
+background-color:#000;
+background-image:url('file://_path_/You-Tube-Play-Icon-3.png');
+background-repeat:no-repeat;
+background-position:center;
+font-size:1px;
+_border_
+}
+
+#controller {
+position:absolute;
+left:_padding_px;
+width:_myWidth_px;
+height:45px;
+bottom:_padding_px;
+z-index:2;
+background-color:#bcbcbc;
+font-size:1px;
+background-image:url('file://_path_/Time-Line-3.png');
+background-repeat:repeat-x;
+background-position:left top;
+}
+
+.controllerView {
+visibility: _controllerview_;
+}
+
+#leftItems {
+position:relative;
+float:left;
+width:82px;
+height:25px;
+background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#ffffff), to(#bcbcbb) );
+font-size:1px;
+
+}
+
+#rightItems {
+position:absolute;
+float:right;
+width:_rightWidth_px;
+height:45px;
+right:0px;
+bottom:0px;
+font-size:1px;
+background-image:url('file://_path_/Right-Controller-3.png');
+background-repat:no-repeat;
+background-position: left top;
+}
+
+#middleBit {
+position:relative;
+height:25px;
+overflow:hidden;
+font-size:1px
+}
+
+.divider {
+background-color: #bcbcbc;
+border-right: 1px solid rgba(255,255,255,0.8);
+height:25px;
+position:absolute;
+top:0px;
+width:1px;
+font-size:1px;
+}
+
+.errorbox {
+background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#ffffff), to(#cccccc) );
+width:100;
+position:absolute;
+top:0px;
+left:0px;
+width:100%;
+font-size:12px;
+z-index:200;
+visibility:_errorvisible_;
+}
+
+.text {
+font-family:Verdana,Arial,Helvetica,sans-serif;
+font-size:11px;
+}
+
+.highlight {
+position:absolute;
+background-color:#ffffff;
+left:1px;
+top:1px;
+z-index:190;
+font-size:1px;
+opacity: 0.6;
+_visibility_
+}
+
+-->
+</style>
+</head>
+<body>
+<div id="PageDiv" style="position:relative; min-height:100%; background-color:#bcbcbc;">
+	<div id="youTube">
+		<div id="moviedisplay" class="f-x2">
+			<div id="title" style="position:absolute; top:0; left:0; height:30px; width:100%;">
+				<img src="file://_path_/YouTube-Title.png">	
+			</div>
+		</div>
+		<div id="controller" class="controllerView">
+			<div id="leftItems" class="f-x3">
+				<img src="file://_path_/Left-Controller-3.png" width="151" height="45">
+			</div>
+			<div id="rightItems">
+			</div>
+			<div id="middleBit" class="f-x3">
+				
+			</div>
+		</div>
+		
+		<div class="highlight" style="width:100%; height:1px;"></div>
+		<div class="highlight" style="width:1px; height:100%;"></div>
+		
+		<div class="errorbox">
+		<p class="text"><img src="file://_path_/warningtriangle.png" width="56" height="51" style="float:left">_errorMessage_</p>
+		</div>
+		
+	</div>
+
+
+</div>
+</body>
+</html>
+</action-markup>
+
+
+<action-markup custom name="eolas">
+/*
+ * This file contains functions to generate OBJECT, EMBED, and APPLET tags.
+ * Adapted from AC_QuickTime.js 
+ */
+
+var gTagAttrs = null;
+
+function _FWAddAttribute(prefix, slotName, tagName)
+{
+	var		value;
+
+	value = gTagAttrs[prefix + slotName];
+	if ( null == value )
+		value = gTagAttrs[slotName];
+
+	if ( null != value )
+	{
+		if ( 0 == slotName.indexOf(prefix) && (null == tagName) )
+			tagName = slotName.substring(prefix.length); 
+		if ( null == tagName ) 
+			tagName = slotName;
+		return tagName + '="' + value + '" ';
+	}
+	else
+		return "";
+}
+
+function _FWAddObjectAttr(slotName, tagName)
+{
+	if ( 0 == slotName.indexOf("emb#") )
+		return "";
+
+	if ( 0 == slotName.indexOf("obj#") && (null == tagName) )
+		tagName = slotName.substring(4); 
+
+	return _FWAddAttribute("obj#", slotName, tagName);
+}
+
+function _FWAddEmbedAttr(slotName, tagName)
+{
+	if ( 0 == slotName.indexOf("obj#") )
+		return "";
+
+	if ( 0 == slotName.indexOf("emb#") && (null == tagName) )
+		tagName = slotName.substring(4); 
+
+	return _FWAddAttribute("emb#", slotName, tagName);
+}
+
+function _FWAddAppletAttr(slotName, tagName)
+{
+	if ( 0 == slotName.indexOf("obj#") )
+		return "";
+
+	if ( 0 == slotName.indexOf("app#") && (null == tagName) )
+		tagName = slotName.substring(4); 
+
+	return _FWAddAttribute("app#", slotName, tagName);
+}
+
+function _FWAddObjectParam(slotName, generateXHTML)
+{
+	var		paramValue;
+	var		paramStr = "";
+	var		endTagChar = (generateXHTML) ? ' />' : '>';
+
+	if ( -1 == slotName.indexOf("emb#") )
+	{
+		paramValue = gTagAttrs["obj#" + slotName];
+		if ( null == paramValue )
+			paramValue = gTagAttrs[slotName];
+
+		if ( 0 == slotName.indexOf("obj#") )
+			slotName = slotName.substring(4); 
+	
+		if ( null != paramValue )
+			paramStr = '  <param name="' + slotName + '" value="' + paramValue + '"' + endTagChar + '\n';
+	}
+
+	return paramStr;
+}
+
+function _FWDeleteTagAttrs()
+{
+	for ( var ndx = 0; ndx < arguments.length; ndx++ )
+	{
+		var attrName = arguments[ndx];
+		delete gTagAttrs[attrName];
+		delete gTagAttrs["emb#" + attrName];
+		delete gTagAttrs["obj#" + attrName];
+	}
+}
+
+function _FWGenerate(args)
+{
+	if ( args.length < 8 || (0 != (args.length % 2)) )
+	{
+		return "";
+	}
+	
+	gTagAttrs = new Array();
+	gTagAttrs["src"] = args[0];
+	gTagAttrs["width"] = args[1];
+	gTagAttrs["height"] = args[2];
+	
+	var generateXHTML = ("true" == args[4]);
+	var contentType = args[5];
+	var altText = args[6];
+	
+	if (altText != "")
+		altText = altText + '\n';
+	
+	if ("quicktime" == contentType)
+	{
+		gTagAttrs["classid"] = "clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B";
+		gTagAttrs["pluginspage"] = "http://www.apple.com/quicktime/download/";
+
+		var activexVers = args[3]
+		if ( (null == activexVers) || ("" == activexVers) )
+			activexVers = "6,0,2,0";
+		gTagAttrs["codebase"] = "http://www.apple.com/qtactivex/qtplugin.cab#version=" + activexVers;
+	}
+	else if ("flash" == contentType)
+	{
+		gTagAttrs["classid"] = "clsid:D27CDB6E-AE6D-11cf-96B8-444553540000";
+		gTagAttrs["pluginspage"] = "http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash";
+
+		var activexVers = args[3]
+		if ( (null == activexVers) || ("" == activexVers) )
+			activexVers = "8,0,24,0";
+		gTagAttrs["codebase"] = "http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=" + activexVers;
+	}
+
+	var	attrName,
+		attrValue;
+
+	for ( var ndx = 8; ndx < args.length; ndx += 2)
+	{
+		attrName = args[ndx].toLowerCase();
+		attrValue = args[ndx + 1];
+
+		if ( "name" == attrName || "id" == attrName )
+			gTagAttrs["name"] = attrValue;
+
+		else 
+			gTagAttrs[attrName] = attrValue;
+	}
+
+	var objTag =  '<object '
+					+ _FWAddObjectAttr("classid")
+					+ _FWAddObjectAttr("width")
+					+ _FWAddObjectAttr("height")
+					+ _FWAddObjectAttr("codebase")
+					+ _FWAddObjectAttr("name", "id")
+					+ _FWAddObjectAttr("tabindex")
+					+ _FWAddObjectAttr("hspace")
+					+ _FWAddObjectAttr("vspace")
+					+ _FWAddObjectAttr("border")
+					+ _FWAddObjectAttr("align")
+					+ _FWAddObjectAttr("class")
+					+ _FWAddObjectAttr("title")
+					+ _FWAddObjectAttr("accesskey")
+					+ _FWAddObjectAttr("noexternaldata")
+					+ _FWAddObjectAttr("style")
+					+ '>\n'
+					+ _FWAddObjectParam("src", generateXHTML);
+	var embedTag = '  <embed '
+					+ _FWAddEmbedAttr("src")
+					+ _FWAddEmbedAttr("width")
+					+ _FWAddEmbedAttr("height")
+					+ _FWAddEmbedAttr("pluginspage")
+					+ _FWAddEmbedAttr("name")
+					+ _FWAddEmbedAttr("align")
+					+ _FWAddEmbedAttr("tabindex");
+
+	_FWDeleteTagAttrs("src","width","height","pluginspage","classid","codebase","name","tabindex",
+					"hspace","vspace","border","align","noexternaldata","class","title","accesskey","style");
+
+	for ( var attrName in gTagAttrs )
+	{
+		attrValue = gTagAttrs[attrName];
+		if ( null != attrValue )
+		{
+			embedTag += _FWAddEmbedAttr(attrName);
+			objTag += _FWAddObjectParam(attrName, generateXHTML);
+		}
+	} 
+
+	return objTag + embedTag + '> </em' + 'bed>\n' + '</ob' + 'ject' + '>';
+}
+
+function _FWGenerateApplet(args)
+{
+	if ( args.length < 6 || (0 != (args.length % 2)) )
+	{
+		return "";
+	}
+
+	gTagAttrs = new Array();
+	gTagAttrs["code"] = args[0];
+	gTagAttrs["width"] = args[1];
+	gTagAttrs["height"] = args[2];
+	
+	var generateXHTML = ("true" == args[4]);
+	var altText = args[5];
+	
+	if (altText != "")
+		altText = altText + '\n';
+	
+	var	attrName,
+		attrValue;
+
+	for ( var ndx = 6; ndx < args.length; ndx += 2)
+	{
+		attrName = args[ndx].toLowerCase();
+		attrValue = args[ndx + 1];
+
+		if ( "name" == attrName || "id" == attrName )
+			gTagAttrs["name"] = attrValue;
+
+		else 
+			gTagAttrs[attrName] = attrValue;
+	}
+	
+	var appletTag = '  <applet '
+					+ _FWAddAppletAttr("code")
+					+ _FWAddAppletAttr("width")
+					+ _FWAddAppletAttr("height")
+					+ _FWAddAppletAttr("codebase")
+					+ _FWAddAppletAttr("name")
+					+ _FWAddAppletAttr("tabindex")
+					+ _FWAddAppletAttr("hspace")
+					+ _FWAddAppletAttr("vspace")
+					+ _FWAddAppletAttr("border")
+					+ _FWAddAppletAttr("align")
+					+ _FWAddAppletAttr("alt")
+					+ _FWAddAppletAttr("class")
+					+ _FWAddAppletAttr("title")
+					+ _FWAddAppletAttr("style");
+
+	_FWDeleteTagAttrs("code","width","height","codebase","name","tabindex",
+					"hspace","vspace","border","align","alt","class","title","style");
+
+	for ( var attrName in gTagAttrs )
+	{
+		attrValue = gTagAttrs[attrName];
+		if ( null != attrValue )
+		{
+			appletTag += _FWAddAppletAttr(attrName);
+		}
+	} 
+	
+	return appletTag + '> </app' + 'let' + '>';
+}
+
+function FW_WriteObject()
+{
+	document.writeln(_FWGenerate(arguments));
+}
+
+function FW_WriteApplet()
+{
+	document.writeln(_FWGenerateApplet(arguments));
+}
+</action-markup>
+
+<action-javascript>
+var curPath = this.fwPathName.toString();
+curPath = curPath.substring(0, curPath.lastIndexOf(":"));
+curPath = curPath.substring(curPath.indexOf(":")+1, curPath.length);
+curPath = curPath + ":support~";
+
+
+
+function fixEolas()
+{
+	// add Eolas fix
+
+	if (!FileExists("fwObject.js"))
+	{
+		var theFile = new FWFile;
+		theFile.fwOpenWrite("fwObject.js",true,"text");
+		theFile.fwWriteln(fwMarkups["eolas"]);
+		theFile.fwClose();
+	}
+	else
+	{
+		var theFile = new FWFile;
+		theFile.fwOpenRead("fwObject.js",true,"text");
+		theFile.fwClose();
+	}
+	fwParameters["Eolas"].fwSpecify(theFile);
+	fwParameters["Eolas"].toString;
+}
+
+function FileExists(fileName)
+{
+	var file = new FWFile;
+	file.fwOpenRead(fileName);
+	if (file.fwAvailable == 0)
+		return false;
+	file.fwClose();
+	return true;
+}
+
+function fwInterface()
+{
+	fwParameters["l1"].fwVisible = fwParameters["version"].fwValue==2;
+	fwParameters["border"].fwVisible = fwParameters["version"].fwValue==2;
+	fwParameters["color1"].fwVisible = fwParameters["version"].fwValue==2;
+	fwParameters["color2"].fwVisible = fwParameters["version"].fwValue==2;
+	fwParameters["hd"].fwVisible = fwParameters["version"].fwValue==2;
+}
+
+function fwParameterChanged(newParam,oldParam)
+{
+	if (newParam.fwName == "key")
+	{
+		// Remove all but the item's ID number from the new entry
+		key = newParam.fwValue.toString();
+		if (key.indexOf("user")>0)
+		{
+			/*
+				for URLs of the kind:
+				http://www.youtube.com/user/HairyDalek#p/a/u/0/-WXtYp7d0DU
+			
+			*/
+			pos = key.lastIndexOf("/");
+			key = key.substring(pos+1,key.length);
+		}
+		else if (key.indexOf("v=")>0)
+		{
+			/*
+				for URLs of the kind:
+				
+				http://www.youtube.com/watch?v=Xsz9S4Hqr1g
+			
+			*/
+			
+			pos = key.indexOf("v=");
+			key = key.substring(pos+2,key.length);
+			
+			pos = key.indexOf("&")
+			if (pos>0)
+			{
+				key = key.substring(0,pos);
+			}
+		}
+		newParam.fwValue = key;
+	}
+}
+
+function fwBeforeEndBody()
+{	
+	var item = fwDocument.fwTags.fwFind("",fwItem);
+	theVersion = fwParameters["version"].fwValue;
+	if (item)
+	{
+		if (theVersion=="iFrame")
+		{
+			container = fwMarkups["iframe"].toString();
+		}
+		else
+		{
+			container = fwMarkups["movie"].toString();
+		}
+		container = container.replace(/_id_/g,fwParameters["key"].fwValue);
+		container = container.replace(/_width_/g,fwItem.fwWidth);
+		container = container.replace(/_height_/g,fwItem.fwHeight);
+		
+		myVersion="";
+		if (fwParameters["version"].fwValue==3)
+		{
+			myVersion = "&amp;version=3";
+		}
+		
+		container = container.replace(/_version_/g,myVersion);
+		
+		parameters="";
+		moreParams = ',"allowScriptAccess" , "always"';
+		
+		if (fwParameters["autoplay"].fwBoolValue)
+		{
+			parameters = parameters + "&amp;autoplay=1";
+		}
+		
+		if (fwParameters["autohide"].fwBoolValue)
+		{
+			parameters = parameters + "&amp;autohide=1";
+			moreParams = moreParams + ',"autohide" , "1"'
+		}
+		
+		if (fwParameters["controls"].fwBoolValue)
+		{
+			parameters = parameters + "&amp;controls=1";
+			moreParams = moreParams + ',"controls" , "1"'
+		}
+		else
+		{
+			parameters = parameters + "&amp;controls=0";
+			moreParams = moreParams + ',"controls" , "0"'
+		}
+		
+		if (!fwParameters["related"].fwBoolValue)
+		{
+			parameters = parameters + "&amp;rel=0";
+			moreParams = moreParams  + ',"rel" , "0"';
+		}
+		
+		if (fwParameters["version"].fwValue==2)
+		{
+		
+			if (fwParameters["border"].fwBoolValue)
+			{
+				parameters = parameters + "&amp;border=1";
+				moreParams = moreParams  + ',"border" , "1"';
+			}
+			
+			
+			if (fwParameters["color1"].fwValue!="")
+			{
+				myColour = fwParameters["color1"].fwValue.fwHex;
+				parameters = parameters + "&amp;color1=" + myColour;
+				moreParams = moreParams  + ' , "color1" , "'+myColour+'"';
+			}
+			
+			
+			if (fwParameters["color2"].fwValue!="")
+			{
+				myColour = fwParameters["color2"].fwValue.fwHex;
+				parameters = parameters + "&amp;color2=" + myColour;
+				moreParams = moreParams  + ' , "color2" , "'+myColour+'"';
+			}
+		
+		}
+		
+		if (!fwParameters["showannotations"].fwBoolValue)
+		{
+			parameters = parameters + "&amp;iv_load_policy=3";
+			moreParams = moreParams  + ',"iv_load_policy" , "3"';
+		}
+		
+		if (fwParameters["hd"].fwBoolValue)
+		{
+			parameters = parameters + "&amp;hd=1";
+		}
+		else
+		{
+			parameters = parameters + "&amp;hd=0";
+		}
+		
+		if (!fwParameters["showinfo"].fwBoolValue)
+		{
+			parameters = parameters + "&amp;showinfo=0";
+		}
+		
+		if (fwParameters["fs"].fwBoolValue)
+		{
+			parameters = parameters + "&amp;fs=1";
+			moreParams = moreParams  + ',"allowFullScreen" , "true"';
+		}
+		else
+		{
+			parameters = parameters + "&amp;fs=0";
+			moreParams = moreParams  + ',"allowFullScreen" , "false"';
+		}
+		
+		if (fwParameters["loop"].fwBoolValue)
+		{
+			parameters = parameters + "&loop=1";
+			moreParams = moreParams  + ',"loop" , "1"';
+			if (fwParameters["version"].fwValue==3)
+			{
+				parameters = parameters + "&amp;playlist="+fwParameters["key"].fwValue;
+				moreParams = moreParams  + ',"playlist" , "' + fwParameters["key"].fwValue + '"';
+			}
+		}
+		
+		if (fwParameters["disablekb"].fwBoolValue)
+		{
+			parameters = parameters + "&amp;disablekb=1";
+		}
+		
+		parameters = parameters + "&amp;start=" + fwParameters["start"].fwValue;
+		
+		container = container.replace(/_parameters_/g,parameters);
+		
+		container = container.replace(/_moreparams_/g,moreParams);
+		
+		if (fwParameters["version"].fwValue!="iFrame")
+		{
+			item.fwAddRaw(container);
+			fixEolas();
+	
+			var headTag = fwDocument.fwTags.fwFind("head");
+			myCode = '<script src="'+fwParameters.Eolas.fwValue+'" type="text/javascript"></script>';
+	
+			if (headTag)
+				headTag.fwAddRaw(myCode);
+		}
+		else
+		{
+			myIframe 				=	item.fwAdd("iframe",true);
+			myIframe.width			=	fwQuote(fwItem.fwWidth);
+			myIframe.height			=	fwQuote(fwItem.fwHeight);
+			//myIframe.type			=	fwQuote("text/html");
+			myIframe.id				=	fwQuote("player");
+			myIframe.src			=	fwQuote(container);
+			myIframe.frameborder	=	fwQuote("0");
+		}
+
+	}
+
+}
+
+function calculateDimensions()
+{
+	myWidth = fwItem.fwWidth;
+	myHeight = fwItem.fwHeight;
+	
+	if ( fwParameters["widescreen"].fwBoolValue )
+	{
+		widthMultiplier = 308/500;
+		heightMultiplier = 500/308;
+		if (fwParameters["border"].fwBoolValue)
+		{
+			widthMultiplier = 313/500;
+			heightMultiplier = 500/313;
+		}
+	}
+	else
+	{
+		widthMultiplier = 0.8235;
+		heightMultiplier = 1.1212;
+	}
+	
+	if (myWidth<myHeight)
+	{
+//		alert("Width less than height"); // this is correct
+		myHeight = myWidth * widthMultiplier;
+	}
+	else
+	{
+//		alert("Height less than width");
+		myWidth = myHeight * heightMultiplier;
+	}
+	
+//	alert("Width: " + myWidth + "\nHeight: " + myHeight);
+	
+	myDims = new Array(myWidth , myHeight);
+	
+	return(myDims);	
+}
+
+
+</action-javascript>
+
+
+<action-javascript>
+function fwDrawItem()
+{
+
+
+	var theHTML = MakeHTML();
+	if (theHTML)
+		return new FWImage(	theHTML, 	// the HTML
+							null, 		// default width (item width)
+							null,  		// default height (item height)
+							1, 			// flags (wait for resources to load)
+							0.1);		// delay after load (to allow webkit time to render)
+
+	return null;
+}
+
+function MakeHTML()
+{
+	var markup;
+	markup = GetMarkup("menuPreview");
+	return markup;
+}
+
+function GetMarkup(name)
+{
+	// This function draws the preview
+	myWidth = fwItem.fwWidth;
+	myHeight = fwItem.fwHeight;
+
+	theVersion = fwParameters["version"].fwValue;
+	if (theVersion == "iFrame")
+		theVersion = "3";
+		
+	myPreviewName = "Preview" + theVersion;
+
+	theMarkup = fwMarkups[myPreviewName].toString();
+
+	theMarkup = theMarkup.replace(/__WIDTH__/g, fwItem.fwWidth);
+	theMarkup = theMarkup.replace(/__HEIGHT__/g, fwItem.fwHeight);
+	
+	if (fwParameters["controls"].fwBoolValue)
+	{
+		theMarkup = theMarkup.replace(/_controllerview_/g, "visible");
+	}
+	else
+	{
+		theMarkup = theMarkup.replace(/_controllerview_/g, "hidden");
+	}
+	
+	
+	
+//	myDimensions = calculateDimensions();
+
+	myPadding = 0;
+
+	if ( (fwParameters["border"].fwBoolValue) && (fwParameters["version"].fwValue==2) )
+	{
+		myWidth = myWidth - 20;
+		myHeight = myHeight - 20;
+		myPadding = 10;
+	}
+	
+	theMarkup = theMarkup.replace(/_myWidth_/g,myWidth);
+	theMarkup = theMarkup.replace(/_myHeight_/g,myHeight);
+	theMarkup = theMarkup.replace(/_padding_/g,myPadding);
+	
+//	We need the path to the Support folder
+
+	myPath = "/"+curPath.replace(/\:/g,"/");
+//	myPath = myPath.replace(/ /g,"%20");
+	
+//	alert(myPath);
+	
+	theMarkup = theMarkup.replace(/_path_/g,myPath);
+	
+	grad = "";
+	
+	
+	
+	if (fwParameters["version"].fwValue==2)
+	{
+		if (fwParameters["color1"].fwValue!="")
+		{
+			theMarkup = theMarkup.replace(/bcbcbc/g, fwParameters["color1"].fwValue.fwHex);
+		}
+		
+		if (fwParameters["color2"].fwValue!="")
+		{
+			theMarkup = theMarkup.replace(/bcbcbb/g, fwParameters["color2"].fwValue.fwHex);
+		}
+		
+		
+		if ( (fwParameters["color2"].fwValue!="") || (fwParameters["color1"].fwValue!=""))
+		{
+			color1="bcbcbc";
+			color2="bcbcbc";
+			if (fwParameters["color1"].fwValue!="")
+			{
+				color1 = fwParameters["color1"].fwValue.fwHex;
+			}
+			if (fwParameters["color2"].fwValue!="")
+			{
+				color2 = fwParameters["color2"].fwValue.fwHex;
+			}
+			grad="background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#"+color1+"), to(#"+color1+"), color-stop(.5,#"+color2+"))";
+		}
+		// Cut out the gradiation if needed
+		if ( (!fwParameters["controls"].fwBoolValue ) &&  (!fwParameters["border"].fwBoolValue) )
+		{
+			grad="";
+		}
+		
+	}
+	
+	theMarkup = theMarkup.replace(/_grad_/g,grad);
+	
+	// Now for the highlights, but only for the border option
+	if ((fwParameters["border"].fwBoolValue) && (fwParameters["version"].fwValue==2))
+	{
+		theMarkup = theMarkup.replace(/_border_/g,"border: 1px solid rgba(255,255,255,0.6);");
+		theMarkup = theMarkup.replace(/_visibility_/g,"visibility:visble;");
+	}
+	else
+	{
+		theMarkup = theMarkup.replace(/_border_/g,"");
+		theMarkup = theMarkup.replace(/_visibility_/g,"visibility:hidden;");
+	}
+	
+	theControllerHeight = 25;
+	
+	if (fwParameters["version"].fwValue=="2")
+	{
+		theControllerHeight = 25;
+	}
+	
+	if (fwParameters["version"].fwValue!="2")
+	{
+		theControllerHeight = 30;
+	}
+	
+	if ((fwParameters["border"].fwBoolValue) && (fwParameters["version"]==2) )
+	{
+		theControllerHeight = 33;
+	}
+	
+	if ( fwParameters["widescreen"].fwBoolValue )
+	{
+		widthMultiplier = 9/16; // 308/500;
+		heightMultiplier = 16/9; //500/308;
+		
+		if (fwParameters["border"].fwBoolValue)
+		{
+			widthMultiplier = 9/16; //313/500;
+			heightMultiplier = 16/9; //500/313;
+		}
+	}
+	else
+	{
+		//widthMultiplier = 0.75; //0.8235;
+		widthMultiplier = 3/4;
+		//heightMultiplier = 1.1212;
+		heightMultiplier = 4/3;
+	}
+	
+	rightWidth = 217;
+	if (!fwParameters["fs"].fwBoolValue)
+	{
+		rightWidth = 186;
+	}
+	
+	theMarkup = theMarkup.replace(/_rightWidth_/g,rightWidth);
+	
+	part1 = fwGetString("For best playback results, please change the height of this item to");
+
+	myHeight = fwItem.fwHeight;
+	
+	targetHeight = Math.floor(fwItem.fwWidth * widthMultiplier);
+	
+	if (!fwParameters["autohide"].fwBoolValue)
+		targetHeight = targetHeight + theControllerHeight;
+
+	
+	if ( targetHeight == myHeight )
+	{
+		theMarkup = theMarkup.replace(/_errorvisible_/g,"hidden");
+	}
+	else
+	{
+		theMarkup = theMarkup.replace(/_errorvisible_/g,"visible");
+	}
+	
+	errorMessage = part1 + " <b>" + targetHeight + "px</b>.";
+
+	theMarkup = theMarkup.replace(/_errorMessage_/g,errorMessage);
+
+	return theMarkup;
+}
+
+</action-javascript>
+
+</action>

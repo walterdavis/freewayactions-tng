@@ -1,0 +1,73 @@
+<action-encoding>UTF-8</action-encoding>
+<action name="Inlay"  height="12" width="50">
+<action-version version="1.0">
+Inlay Action
+(c)2013-2014 Walter Davis Studio
+</action-version>
+<action-text name="source" title="Data source" />
+<action-popup name="format" title="Formatting">
+<value name="string" title="Plain Text" />
+<value name="markdown" title="Markdown" />
+<value name="wysiwyg" title="WYSIWYG" />
+<value name="html" title="Raw Markup" />
+</action-popup>
+<action-javascript>
+if(undefined == String.prototype.trim){
+  String.prototype.trim = function(){
+    return this.toString().replace(/^\s+/,'').replace(/\s+$/,'');
+  }
+}
+function fwBeforeEndBody(){
+  var element = fwDocument.fwTags.fwFind(fwItem);
+  if(!!element){
+    var enclosing = element.fwFindEnclosing(['p', 'li', 'dt', 'dd', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
+    if(!!enclosing){
+      var source = fwParameters.source.fwValue.toString().trim();
+      var format = fwParameters.format.fwValue.toString().trim();
+      if(!source.match(/^[a-z][a-z0-9_]+$/)) 
+        fwAbort('“' + source + '” is not a valid variable name. Publishing cannot continue.');
+      if(format == 'markdown' && enclosing.fwTitle.toString().match(/p|h\d/)) 
+        fwAbort('<' + enclosing.fwTitle.toString() + '> elements cannot contain Markdown content. Publishing cannot continue.');
+      enclosing['data-inlay'] = fwQuote([source, format].join(':'));
+    }
+    element.fwDelete();
+  }
+}
+</action-javascript>
+</action>
+<item-action name="Inlay">
+<action-version version="1.0">
+Inlay Action
+(c)2013-2014 Walter Davis Studio
+</action-version>
+<action-text name="source" title="Data source" />
+<action-popup name="format" title="Formatting">
+<value name="string" title="Plain Text" />
+<value name="markdown" title="Markdown" />
+<value name="wysiwyg" title="WYSIWYG" />
+<value name="html" title="Raw Markup" />
+</action-popup>
+<action-javascript>
+if(undefined == String.prototype.trim){
+  String.prototype.trim = function(){
+    return this.toString().replace(/^\s+/,'').replace(/\s+$/,'');
+  }
+}
+function fwInterface(){
+  if(fwParameters['source'].fwValue == ''){
+    fwParameters['source'].fwValue = fwItem.toString();
+  }
+}
+function fwBeforeEndBody(){
+  var element = fwDocument.fwTags.fwFind(fwItem);
+  if(!!element){
+    var source = fwParameters.source.fwValue.toString().trim();
+    var format = fwParameters.format.fwValue.toString().trim();
+    if(source.length < 1) fwAbort('Enter a variable name for “' + fwItem.toString() + '”');
+    if(!source.match(/^[a-z][a-z0-9_]+$/)) 
+      fwAbort('“' + source + '” is not a valid variable name. Publishing cannot continue.')
+    element['data-inlay'] = fwQuote([source, format].join(':'));
+  }
+}
+</action-javascript>
+</item-action>

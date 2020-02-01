@@ -1,0 +1,91 @@
+<action-encoding>UTF-8</action-encoding>
+<action! IFRAME Action/>
+<action-appliesto non-xhtmlstrict>
+
+<action-version version="2.2">
+	Paul Dunning and Softpress Systems Ltd. 2009
+</action-version>
+
+<action name="IFrame" title="iFrame" version="5">
+<action-url name="URL" required />
+<action-popup name="Scrolling">
+	<value name="No" value="no" default />
+	<value name="Yes" value="yes" />
+	<value name="Auto" value="auto" />
+</action-popup>
+	
+<action-popup name="FrameBorder" title="Frame border">
+	<value name="1" value="1" default/>
+	<value name="0" value="0" />
+</action-popup>
+
+<action-text name="Name" title="iFrame name" required/>
+<action-checkbox name="Transparency" title="Transparency" help-tag="Make sure the target has no background color"/>
+
+
+<action-markup custom name="iframe">
+	<iframe src="_url_" name="_name_" width="_width_" height="_height_" frameborder="_frameborder_" scrolling="_scrolling_" style="margin:0; padding:0;"></iframe>
+</action-markup>
+
+<action-markup custom name="preview">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title></title>
+	</head>
+	<body style="margin:0; padding:0;">
+	_iframe_
+	</body>
+</html>
+</action-markup>
+
+
+<action-javascript>
+function makePreview()
+{
+	var theHTML = fwMarkups["preview"].toString();
+	iframe = fwMarkups["iframe"].toString();
+	iframe = iframe.replace(/_url_/g,fwParameters["URL"].fwValue.fwUrl(fwPage))
+		.replace(/_name_/g,fwParameters["Name"].fwValue)
+		.replace(/_width_/g,fwItem.fwWidth)
+		.replace(/_height_/g,fwItem.fwHeight)
+		.replace(/_frameborder_/g,fwParameters["FrameBorder"].fwValue)
+		.replace(/_scrolling_/g,fwParameters["Scrolling"].fwValue);
+	return theHTML.replace(/_iframe_/, iframe);
+}
+
+function fwBeforeEndHTML()
+{
+	var item = fwDocument.fwTags.fwFind("",fwItem);
+	if (item)
+	{
+		iframe = item.fwAdd("iframe", true);
+		iframe.src = "\""+fwParameters["URL"].fwValue.fwUrl(fwPage)+"\"";
+		iframe.id = "\""+fwItem.fwTitle+fwParameters["Name"].fwValue+"\"";
+		iframe.name = "\""+fwParameters["Name"].fwValue+"\"";
+		iframe.width = "\""+(fwItem.fwWidth-(fwParameters["FrameBorder"].fwValue*4))+"\"";
+		iframe.height = "\""+(fwItem.fwHeight-(fwParameters["FrameBorder"].fwValue*4))+"\"";
+		iframe.frameborder = "\""+fwParameters["FrameBorder"].fwValue+"\"";
+		iframe.scrolling = "\""+fwParameters["Scrolling"].fwValue+"\"";
+		iframe.allowtransparency = "\""+fwParameters["transparency"].fwBoolValue+"\"";
+	}
+
+}
+
+
+function fwDrawItem()
+		{
+			var theHTML = makePreview();
+			if (theHTML)
+			{
+				return new FWImage(	theHTML,
+									fwItem.fwWidth+(fwParameters["FrameBorder"].fwValue*4),
+									fwItem.fwHeight+(fwParameters["FrameBorder"].fwValue*4),
+									1,
+									0.1);
+			}
+			return null;
+		}
+
+</action-javascript>
+</action>

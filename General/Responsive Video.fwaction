@@ -1,0 +1,329 @@
+﻿/*	**************************	Video Action	*******************************	*/
+
+<action-encoding>UTF-8</action-encoding>
+<action name="com.freewayactions.actions.responsive-video" title="Responsive Video">
+<action-appliesto applescript/>
+<action-text name="videoSrc" title="Video embed code" default="jeNJsV3cF-c">
+<action-popup name="host" title="Video host">
+ <value name="YouTube" value="http://www.youtube.com/embed/" default/>
+ <value name="Vimeo" value="http://player.vimeo.com/video/"/>
+ <value name="Daily Motion" value="http://www.dailymotion.com/embed/video/"/>
+</action-popup>
+<action-popup name="autoplay" title="Autoplay">
+ <value name="No" value="no" default/>
+ <value name="Yes" value="yes"/>
+</action-popup>
+<action-popup name="format" title="Format">
+ <value name="4:3" value="75"/>
+ <value name="16:9" value="56.25" default/>
+</action-popup>
+
+<action-popup name="https" title="Secure connection (https)?">
+ <value name="No" value="no" default/>
+ <value name="Yes" value="yes"/>
+</action-popup>
+
+<action-popup name="fullscreen" title="Allow full screen">
+ <value name="No" value="no" default/>
+ <value name="Yes" value="yes"/>
+</action-popup>
+
+<!action linked files >
+<action-file var name="videoCSS">
+<action-version version="1.6.1">
+	Responsive Video
+	
+	Based on the Backdraft Video Action
+	Action copyright © 2013-2017, FreewayActions.com
+</action-version>
+<action-markup custom name="video-preview"><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- width="__PREVIEWWIDTH__" height="__PREVIEWHEIGHT__" -->
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=ISO-8859-1">
+<title>Vimeo preview</title>
+<style type="text/css">
+<!-- 
+body { margin:0px;background-color:#ddd;}
+html { height:100% }
+p { padding-top:70px; font-family: Arial,Verdana, Helvetica, sans-serif; font-size:12px; color:#888;text-align:center;text-shadow: #fff 1px 1px 1px; }
+-->
+</style>
+</head>
+<body>
+<iframe src="__host____autoplay____videoURL__" style="width:__PREVIEWWIDTH__px;height:__PREVIEWHEIGHT__px" __fullScreen__></iframe>
+</body>
+</html>
+</action-markup>
+<action-markup custom name="videoCSS">/* Flexible width video */
+#PageDiv .video-container {
+	text-align:left;
+	position: relative;
+	padding-bottom: 56.25%;
+	height: 0;
+	overflow: hidden;
+}
+#PageDiv .video-container.fourthree {
+	padding-bottom: 75%;
+}
+.video-container iframe, .video-container object, .video-container embed {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+}
+iframe[seamless]{ background-color: transparent; border: 0px none transparent; padding: 0px; overflow: hidden; }</action-markup>
+<action-javascript>
+	
+	
+	function fwInterface(){
+		//var youTube = fwParameters["host"].fwValue == "http://www.youtube.com/embed/";
+		//fwParameters["fullscreen"].fwVisible = youTube;
+	}
+	
+	//*****************************   Preview functions start   *****************************//
+	
+	
+	function fwParameterChanged(param1, param2)
+	{
+		//force the preview to update
+		//fwItem.fwRedraw();
+	}
+	
+	
+	function fwDrawItem(){
+			var theHTML = makePreview("video-preview");
+			//var theHTML = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"><html><!-- width="401" height="279" --><head><meta http-equiv=Content-Type content="text/html; charset=ISO-8859-1"><title>Vimeo preview</title><style type="text/css"><!-- body { margin:0px; background-color:transparent }html { height:100% }img { margin:0px; border-style:none }--></style></head><body><embed src="http://vimeo.com/moogaloop.swf?clip_id=20061744&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=1&amp;color=00ADEF&amp;fullscreen=1&amp;autoplay=0&amp;loop=0" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="400" height="225"></embed></body></html>';
+			if (theHTML){
+				return new FWImage(	theHTML, 	// the HTML
+									null, 		// default width (item width)
+									null,  		// default height (item height)
+									1, 			// flags (wait for resources to load)
+									0.1);		// delay after load (to allow webkit time to render)
+			}
+			return null;
+	}
+	
+	
+	function cleanVideoSrc(src){
+		var host = fwParameters["host"].fwValue;
+		//host = youtube
+		if (host == "http://www.youtube.com/embed/"){
+			
+			if (src.indexOf("http") == 0){
+			
+				//Is the URL a full URL (https://www.youtube.com/watch?v=C1-7K-fkn5c&feature=youtu.be) or a short one (https://youtu.be/C1-7K-fkn5c)?
+				var videoIDMarker = "?v=";
+				var videoIDMarkerOffset = 3;
+				if (src.indexOf("https://youtu.be") == 0){
+					videoIDMarker = "/";
+					videoIDMarkerOffset = 1;
+				}
+				
+				if (src.indexOf(videoIDMarker) > -1){
+				
+					//does the URL have a query string in it? If so strip it out
+					if(src.indexOf("&") > -1){
+						src = src.slice(0,src.indexOf("&"));
+					}
+					
+					var videoID = src.slice(src.lastIndexOf(videoIDMarker)+videoIDMarkerOffset);
+					return videoID;
+				}
+			}
+			return src;
+		}
+		
+		//vimeo
+		if (host == "http://player.vimeo.com/video/"){
+			if (src.indexOf("http") == 0){
+				var videoIDMarker = "/";
+				if (src.indexOf(videoIDMarker) > -1){
+					var videoID = src.slice(src.lastIndexOf(videoIDMarker)+1);
+					return videoID;
+				}
+			}
+			return src;
+		}
+		
+		//daily motion
+		if (host == "http://www.dailymotion.com/embed/video/"){
+			if (src.indexOf("http") == 0){
+				var videoIDMarker = "/";
+				if (src.indexOf(videoIDMarker) > -1){
+					var videoID = src.slice(src.lastIndexOf(videoIDMarker)+1);
+					return videoID;
+				}
+			}
+			return src;
+		}
+	}
+	
+	function makePreview(name){
+		var theMarkup = fwMarkups[name].toString();
+		
+		theMarkup = theMarkup.replace(/__host__/g, fwParameters["host"].fwValue);
+		
+		var autoplay = "";
+		if (fwParameters["autoplay"].fwValue == "yes"){
+			autoplay = "?autoplay=1";
+		}
+		theMarkup = theMarkup.replace(/__autoplay__/g, autoplay);
+		
+		theMarkup = theMarkup.replace(/__videoURL__/g, cleanVideoSrc(fwParameters["videoSrc"].fwValue));
+		
+		var fullScreenCode = "";
+		if (fwParameters["fullscreen"].fwBoolValue){
+			fullScreenCode = "webkitAllowFullScreen mozallowfullscreen allowFullScreen";
+		}
+		theMarkup = theMarkup.replace(/__fullScreen__/g, fullScreenCode);
+		
+		theMarkup = theMarkup.replace(/__PREVIEWWIDTH__/g, fwItem.fwWidth);
+		theMarkup = theMarkup.replace(/__PREVIEWHEIGHT__/g, fwItem.fwHeight);
+		 
+		return(theMarkup);		
+	}
+		
+	//*****************************   Preview functions end   *****************************//
+	
+	
+	function getHashTag(fileref){
+		if (fwParameters[fileref].fwHasFile){
+			var theFile = macToPosixPath(fwParameters[fileref].fwPathName);	
+			var theCode = 'do shell script "md5 \'' + theFile + '\'"';
+			var osa = new FWOSAInterpreter;
+			osa.fwWrite(theCode);
+			osa.fwCompile(); 
+			var theResult = osa.fwRun();
+			
+			theResult = theResult.slice(theResult.lastIndexOf("=")+2)
+			return theResult;
+		}
+	}
+	
+	function macToPosixPath(mypath){
+		var osa = new FWOSAInterpreter;
+		osa.fwWrite('POSIX path of "' + mypath + '"'); 
+		osa.fwCompile();
+		var theResult = osa.fwRun();
+		return theResult;
+	}
+	
+	//write the code to file and upload it
+	function createFile(outputfilname,filecode,fileref){
+		var outFile = new FWFile;
+		outFile.fwOpenWrite(outputfilname,true,'TEXT','R*ch'); //BBedit text file
+		outFile.fwWriteBytes(filecode);
+		outFile.fwClose();
+		
+		fwParameters[fileref].fwSpecify(outFile);
+		
+		//add a hash code to prevent caching
+		var hashTag = getHashTag(fileref);
+		
+		var myFileExists = fwFindFile(outputfilname);		
+		
+		//upload the file
+		var fileLoc = fwParameters[fileref].fwValue.toString() + "?" + hashTag;
+		fwParameters[fileref].fwClear();
+	
+		//delete the temp files
+		if (myFileExists) {
+				fwDeleteFile(outputfilname);
+		}
+		
+		//delete the temp directory?
+		var tempFolder = outFile.fwPathName.slice(0,(outFile.fwPathName.lastIndexOf(":"))+1);
+		if (fwFindFile(tempFolder)) {
+				//update the file path so we can work with it in Terminal
+				tempFolder = fwConvertFilePath(tempFolder,0,true);
+				var myscript = "rmdir " + tempFolder;
+				fwShellCommand(myscript);
+		}
+		
+		return fileLoc;
+	}
+	
+
+	function fwAfterEndBody(){
+		var me = fwDocument.fwTags.fwFind("",fwItem);
+		if (!me){
+			return;
+		}
+		
+		var videoCSS = "";
+		var iframe = me.fwAdd("iframe");
+		var autoplay = "";
+		if (fwParameters["autoplay"].fwBoolValue){
+			autoplay = "?autoplay=1&modestbranding=1";
+		}
+		
+		//is the site using a https connection
+		//if so replace the http: for https:
+		
+		var host = fwParameters["host"].fwValue;
+		if (fwParameters["https"].fwBoolValue){
+			host = host.replace("http:","https:");
+		}
+		
+		iframe.src = fwQuote(host + cleanVideoSrc(fwParameters["videoSrc"].fwValue) + autoplay );
+		
+		if (fwParameters["fullscreen"].fwBoolValue){
+			iframe.fwAddJToTag("webkitallowfullscreen","webkitallowfullscreen");
+			iframe.fwAddJToTag("mozallowfullscreen","mozallowfullscreen");
+			iframe.fwAddJToTag("allowfullscreen","allowfullscreen");
+		}
+		
+		// Is the page HTML5?
+		var isHtml5 = fwPage.fwHTMLDocType.toString().toLowerCase() === "html";
+		var head = fwDocument.fwTags.fwFind("head");
+		if (!head){ return; }
+		
+		if (isHtml5){
+			iframe.seamless = fwQuote("seamless");
+		} else {
+			iframe.frameborder = fwQuote("0");
+		}
+		head.fwAddRawOpt("");
+		
+		iframe.fwClose = true;
+		me.fwAddRawOpt("");
+		
+		var enclosingSpan = me.fwFindEnclosing("span");
+		
+		var vidClass = "video-container";
+		if (fwParameters["format"].fwValue == "75"){ vidClass = "video-container fourthree" }
+		
+		if (!enclosingSpan){
+			var vidContainer = iframe.fwAddEnclosing("span",true);
+			vidContainer["class"] = fwQuote(vidClass);
+		} else {
+			//use the enclosing span
+			var vidContainer = enclosingSpan;
+			
+			if (vidContainer["class"]){
+				vidContainer["class"] = fwQuote(vidContainer["class"].toString().slice(1,-1) + " " + vidClass);
+			} else {
+				vidContainer["class"] = fwQuote(vidClass);
+			}
+		}
+		vidContainer["style"] = fwQuote("display:block;width:100%;height:0;min-height:0");
+		vidContainer.fwAddRawOpt("");
+		vidContainer.fwAddRawOpt("",vidContainer);
+		
+		if (!fwPage.fwaResponsiveVideo){
+			videoCSS += "\r";
+			videoCSS += fwMarkups["videoCSS"].toString();
+			var fileRef = createFile("responsive-video.css",videoCSS,"videoCSS");
+			
+			var link = head.fwAdd("link");
+			link.rel = fwQuote("stylesheet");
+			link.type = fwQuote("text/css");
+			link.href = fwQuote(fileRef);
+			
+			fwPage.fwaResponsiveVideo = true;
+		}
+	}
+	
+
+</action-javascript>
+</action>

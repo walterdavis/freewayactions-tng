@@ -1,0 +1,18 @@
+<action-encoding>UTF-8</action-encoding>
+<action name="PHP Date" width=60 height=15>
+<action-version version="1.0">
+PHP Date
+</action-version>
+<action-javascript>
+function fwBeforeEndBody(){
+  var thisItem = fwDocument.fwTags.fwFind(fwItem); // a reference to the Action itself
+  // wrap it with a "null" tag:
+  var dummy = thisItem.fwAddEnclosing('', true);
+  var date = '<time datetime="<?php echo date("c", strtotime(date("Y"))); ?>"><?php echo date("Y"); ?></time>';
+  // add the code to the dummy wrapper
+  dummy.fwAddRaw(date);
+  // remove the action-item itself
+  thisItem.fwDelete();
+}
+</action-javascript>
+</action>

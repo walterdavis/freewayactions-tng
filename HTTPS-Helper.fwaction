@@ -1,0 +1,41 @@
+<action-encoding>UTF-8</action-encoding>
+<page-action name="https_helper" title="HTTPS Helper">
+<action-version version="0.0.3">
+HTTPS CDN Helper
+Copyright 2018 Walter Davis Studio
+</action-version>
+<action-checkbox name="secure" title="Use HTTPS everywhere" default="yes" />
+<action-javascript>
+function fwAfterEndHTML(){
+  var scripts = fwDocument.fwTags.fwFindAll('script');
+  for (var i = scripts.length - 1; i >= 0; i--){
+    var script = scripts[i];
+    if(fwParameters['secure'].fwBoolValue && script.src && script.src.toString().indexOf('http') > -1){
+      script.src = script.src.toString().replace(/"http:/i,'"https:').replace(/cdn\.freewaypro\.com/i, 'dnk2vbhoq39rr.cloudfront.net');
+      // alert(script.src)
+    }
+  };
+  var links = fwDocument.fwTags.fwFindAll('link');
+  for (var i = links.length - 1; i >= 0; i--){
+    var link = links[i];
+    if(fwParameters['secure'].fwBoolValue && link.href && link.href.toString().indexOf('http') > -1){
+      link.href = link.href.toString().replace(/"http:/i,'"https:').replace(/cdn\.freewaypro\.com/i, 'dnk2vbhoq39rr.cloudfront.net');
+    }
+  };
+  var links = fwDocument.fwTags.fwFindAll('a');
+  for (var i = links.length - 1; i >= 0; i--){
+    var link = links[i];
+    if(fwParameters['secure'].fwBoolValue && link.href && link.href.toString().indexOf('http') > -1){
+      link.href = link.href.toString().replace(/"http:/i,'"https:');
+    }
+  };
+  var forms = fwDocument.fwTags.fwFindAll('form');
+  for (var i = forms.length - 1; i >= 0; i--){
+    var form = forms[i];
+    if(fwParameters['secure'].fwBoolValue && form.action && form.action.toString().indexOf('http') > -1){
+      form.action = form.action.toString().replace(/"http:/i,'"https:');
+    }
+  };
+}
+</action-javascript>
+</page-action>
