@@ -1,7 +1,7 @@
 <action-encoding>UTF-8</action-encoding>
 <page-action name="com.wdstudio.accordion5_page" title="Accordion5 Page">
 <action-appliesto html5 />
-<action-version version="0.3.0">
+<action-version version="0.4.2">
 Accordion5 Page
 Copyright 2020 Walter Lee Davis
 
@@ -18,11 +18,27 @@ Build a dependency-free HTML5 Accordion.
     }
     return y
   }
+  var viewportwidth;
+  // the more standards compliant browsers (mozilla/netscape/opera/IE7) use window.innerWidth and window.innerHeight
+  if (typeof window.innerWidth != 'undefined') {
+    viewportwidth = window.innerWidth;
+  } else if (typeof document.documentElement != 'undefined'
+    && typeof document.documentElement.clientWidth !=
+  'undefined' && document.documentElement.clientWidth != 0) {
+    viewportwidth = document.documentElement.clientWidth;
+  }
+  // older versions of IE
+  else {
+    viewportwidth = document.getElementsByTagName('body')[0].clientWidth;
+  }
   var tops = document.querySelectorAll('details.accordion-fold');
   Array.prototype.forEach.call(tops, function(elm, i){
     elm.addEventListener('click', function(e){
+      console.log(viewportwidth)
       setTimeout(function(){
-        window.scrollTo(0, getTop(elm))
+        if (viewportwidth <= 640) {
+          window.scrollTo(0, getTop(elm) - _OFFSET_);
+        }
       },6)
     });
   });
@@ -245,8 +261,16 @@ Copyright © 2019 Javan Makhmali
 <action-checkbox name="use_polyfill" title="Apply IE polyfill to page" default="no" />
 <action-checkbox name="exclusive_mode" title="Only one answer open at a time" default="no" />
 <action-checkbox name="scroll_mode" title="Scroll into view" default="no" />
+<action-number name="offset" title="Distance from top (px)" />
+
 
 <action-javascript>
+function fwInterface(){
+  fwParameters['offset'].fwEnable = fwParameters['scroll_mode'].fwBoolValue;
+}
+function fwParameterChanged(){
+  fwInterface();
+}
 function fwBeforeEndBody(){
   if(!fwPage.polyfilled && fwParameters['use_polyfill'].fwBoolValue){
     fwPage['polyfilled'] = true;
@@ -268,7 +292,7 @@ function fwBeforeEndBody(){
     fwPage['scrolled'] = true;
     var theBody = fwDocument.fwTags.fwFind("body");
     var theMarkup = fwMarkups['scroll_to'];
-    theMarkup = theMarkup.toString();
+    theMarkup = theMarkup.toString().replace('_OFFSET_', parseInt(fwParameters['offset'].fwValue, 10));
     theMarkup.fwConvertLineEndings = true;
     theBody.fwAddRawln(theMarkup);
   }
@@ -278,7 +302,7 @@ function fwBeforeEndBody(){
 
 <item-action name="com.wdstudio.accordion5_element" title="Accordion5 Element">
 <action-appliesto html5 />
-<action-version version="0.3.0">
+<action-version version="0.4.0">
 Accordion5 Element
 Copyright 2020 Walter Lee Davis
 
