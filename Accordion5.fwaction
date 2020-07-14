@@ -302,7 +302,7 @@ function fwBeforeEndBody(){
 
 <item-action name="com.wdstudio.accordion5_element" title="Accordion5 Element">
 <action-appliesto html5 />
-<action-version version="0.4.0">
+<action-version version="0.5.8">
 Accordion5 Element
 Copyright 2020 Walter Lee Davis
 
@@ -313,10 +313,18 @@ Convert an inline element to an HTML5 Accordion.
   <value name="h3" />
   <value name="h4" />
 </action-popup>
+<action-checkbox name="microformat" title="Add Linked Data" default="yes" />
 
 <action-javascript>
 if(!'test'.strip) String.prototype.strip = function() {
-	return this.replace(/^\s+/, '').replace(/\s+$/, '');
+  return this.replace(/^\s+/, '').replace(/\s+$/, '');
+};
+
+if(!'test'.strip_tags) String.prototype.strip_tags = function() {
+  var out = this.replace(/<\/a>/gi, '{{/a}}');
+  out = out.replace(/<a .+?href="([^"]+?)"[^>]*?>/gi, '{{a href=\'$1\'}}'); //"
+  out = out.replace(/<[^>]+>/gi, '');
+  return out.replace(/\{\{/g, '<').replace(/\}\}/g, '>');
 };
 
 var hasClassName = function(element, className) {
@@ -342,9 +350,21 @@ var removeClassName = function(element, className) {
 	return element['class'] = (elementClassName.length > 0) ? fwQuote(elementClassName) : null;
 };
 
+function escapeRegExp(string) {
+  return string.replace(/\\/g, '\\\\').replace(/\?/g, '\\\?');
+}
+
 function fwBeforeEndBody(){
   var parent_element = fwDocument.fwTags.fwFind("div",fwItem);
+  var head = fwDocument.fwTags.fwFind('head');
   if(!!parent_element){
+    if(fwParameters['microformat'].fwBoolValue){
+      var script = head.fwAdd('script', true);
+      head.fwAddRawln("");
+      script.type = fwQuote('application/ld+json');
+    }
+    parent_element.fwAddRaw('');
+    var elements = [];
     addClassName(parent_element, 'accordion-bellows');
     var options = parent_element.fwFindAll('div');
     for (var i=0; i < options.length; i++) {
@@ -356,6 +376,16 @@ function fwBeforeEndBody(){
       element.fwTitle = 'details';
       var question = element.fwFind(fwParameters['tag'].fwValue);
       question.fwTitle = 'summary'
+      if(fwParameters['microformat'].fwBoolValue){
+        var question_html = question.fwToHTML().toString();
+        var question_text = question.fwToHTML().toString().strip_tags().strip();
+        var parts = element.fwToHTML().toString().split(question_html);
+        var answer = parts[parts.length - 1].strip_tags().replace(/[\r\n\t]+/g, ' ').strip();
+        elements.push('{"@type":"Question","name":' + fwQuote(question_text) + ',"acceptedAnswer":{"@type":"Answer","text":' + fwQuote(answer) + '}}')
+      }
+    }
+    if(fwParameters['microformat'].fwBoolValue){
+      script.fwAddRaw('{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[' + elements.join(',') + ']}');
     }
   }
 }
