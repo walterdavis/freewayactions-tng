@@ -1,11 +1,12 @@
 <item-action name="com.wdstudio.css3columns" title="CSS3 Columns">
 <action-appliesto non-html32 />
-<action-version version="0.3.1">
+<action-version version="0.4.0">
 “CSS3 Columns” Action
-Walter Davis Studio 2009, 2012
+Walter Davis Studio 2009, 2012, 2020
 
 Apply to an HTML item to give it a multiple columns using pure CSS3.
 </action-version>
+<action-number default="415" name="minimum_width" title="Show full-width below" />
 <action-popup name="columnCount" title="Column Count">
 <value name="auto">
 <value name="2" default>
@@ -57,6 +58,7 @@ Apply to an HTML item to give it a multiple columns using pure CSS3.
 	}
 	function fwAfterEndHTML(){
 		var myhead = fwDocument.fwTags.fwFind("head");
+		var minimum_width = fwParameters['minimum_width'].fwValue;
 		var columnCount = fwParameters['columnCount'].fwValue;
 		var columnGap = fwParameters['columnGap'].fwValue;
 		var columnWidth = fwParameters['columnWidth'].fwValue;
@@ -79,11 +81,11 @@ Apply to an HTML item to give it a multiple columns using pure CSS3.
 				myID = fwQuote(myID,'','"');//"
 				if (myhead){
 					var cssStyles = myhead.fwAddCSSStyles();
-					var count = (columnCount == 'auto') ? '' : ' -moz-column-count: ' + columnCount + '; -webkit-column-count: ' + columnCount + ';';
-					var gap = ' -moz-column-gap: ' + columnGap + '; -webkit-column-gap: ' + columnGap + ';';
-					var rule = (columnRuleStyle == 'none') ? '' : ' -moz-column-rule: ' + columnRuleWidth + 'px ' + columnRuleStyle + ' ' + columnRuleColor + '; -webkit-column-rule: ' + columnRuleWidth + 'px ' + columnRuleStyle + ' ' + columnRuleColor + ';';
-					var width = (columnCount == 'auto') ? ' -moz-column-width: ' + columnWidth + '; -webkit-column-width: ' + columnWidth + ';' : '';
-					cssStyles.fwAddRawln("#" + myID + " { " + count + gap + rule + width + " }");
+					var count = (columnCount == 'auto') ? '' : ' -moz-column-count: ' + columnCount + '; -webkit-column-count: ' + columnCount + '; column-count: ' + columnCount + ';';
+					var gap = ' -moz-column-gap: ' + columnGap + '; -webkit-column-gap: ' + columnGap + '; column-gap: ' + columnGap + ';';
+					var rule = (columnRuleStyle == 'none') ? '' : ' -moz-column-rule: ' + columnRuleWidth + 'px ' + columnRuleStyle + ' ' + columnRuleColor + '; -webkit-column-rule: ' + columnRuleWidth + 'px ' + columnRuleStyle + ' ' + columnRuleColor + '; column-rule: ' + columnRuleWidth + 'px ' + columnRuleStyle + ' ' + columnRuleColor + ';';
+					var width = (columnCount == 'auto') ? ' -moz-column-width: ' + columnWidth + '; -webkit-column-width: ' + columnWidth + '; column-width: ' + columnWidth + ';' : '';
+					cssStyles.fwAddRawln("@media only screen and (min-width: " + minimum_width + "px) { #" + myID + " { " + count + gap + rule + width + " } }");
 				}
 			}
 		//}
